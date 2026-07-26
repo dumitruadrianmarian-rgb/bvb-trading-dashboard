@@ -270,18 +270,40 @@ a { text-decoration: none; color: inherit; }
 .search-container { position: relative; }
 
 .search-container input {
-    padding: 0.5rem 0.85rem;
+    padding: 0.5rem 2.1rem 0.5rem 0.85rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--bg-card);
     font-size: 0.88rem;
     color: var(--text-main);
-    width: 200px;
+    width: 280px;
     transition: border-color 0.15s;
 }
 
 .search-container input:focus {
     border-color: var(--primary);
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 50%;
+    font-size: 1rem;
+    padding: 0;
+}
+.search-clear-btn:hover {
+    color: var(--text-main);
+    background: var(--bg-hover);
 }
 
 .search-suggestions {
@@ -949,7 +971,7 @@ a { text-decoration: none; color: inherit; }
 
     /* Search box — full width on mobile */
     .search-container input {
-        width: 130px;
+        width: 160px;
     }
 
     /* Toast position adjusted for bottom nav */
@@ -1146,7 +1168,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 @media (max-width: 400px) {
-    .search-container input { width: 92px; }
+    .search-container input { width: 110px; }
     .clock-pill .clock-sep { display: none; }
 }
 

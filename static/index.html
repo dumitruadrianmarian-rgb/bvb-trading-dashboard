@@ -38,7 +38,7 @@
       }
     </script>
     <!-- CSS Style Link -->
-    <link rel="stylesheet" href="style.css?v=8.3">
+    <link rel="stylesheet" href="style.css?v=8.4">
 </head>
 <body>
     <div class="app-layout">
@@ -94,8 +94,11 @@
                     <span class="status-indicator online">BVB Live Sync</span>
                 </div>
                 <div class="header-actions">
-                    <div class="search-container" style="display: inline-block; position: relative;">
-                        <input type="text" id="ticker-search-input" placeholder="Caută (ex: TLV)..." style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem;" autocomplete="off">
+                    <div class="search-container">
+                        <input type="text" id="ticker-search-input" placeholder="Caută (ex: TLV)..." autocomplete="off">
+                        <button type="button" id="clear-search-btn" class="search-clear-btn" style="display: none;" aria-label="Șterge căutarea">
+                            <i class="ph-duotone ph-x"></i>
+                        </button>
                         <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
                     </div>
                     <div class="status-indicator clock-pill" style="font-size: 0.75rem;">
