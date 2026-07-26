@@ -901,6 +901,8 @@ a { text-decoration: none; color: inherit; }
 
     .nav-link span { display: block; overflow-wrap: break-word; word-break: break-word; line-height: 1.1; }
 
+    .nav-link i { font-size: 1.55rem; }
+
     /* MAIN CONTENT — no left margin, bottom padding for nav bar */
     .app-main {
         margin-left: 0;
@@ -1149,5 +1151,5 @@ a { text-decoration: none; color: inherit; }
 
 @media (max-width: 370px) {
     .nav-link { font-size: 0.56rem; padding: 0.4rem 0.1rem; }
-    .nav-link i { font-size: 1.05rem; }
+    .nav-link i { font-size: 1.35rem; }
 }
