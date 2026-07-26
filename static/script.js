@@ -1026,6 +1026,86 @@ function detectCandlePatterns(dataSlice) {
             continue;
         }
 
+        // 9a. Piercing Line (Linia de Străpungere) - Bullish, 2 lumânări
+        if (isBearish2 && isBullish3 && c3.open < c2.close && c3.close > (c2.open + c2.close) / 2 && c3.close < c2.open && body2 > c2.close * 0.003) {
+            patterns.push({
+                time: c3.timestamp,
+                name: 'Piercing Line (Linia de Străpungere)',
+                type: 'bullish',
+                tag: 'REVENIRE CUMPĂRĂTORI',
+                desc: 'Prima zi a fost puternic negativă, iar a doua a deschis chiar mai jos, dar a urcat și a acoperit peste jumătate din pierderea anterioară. Cumpărătorii revin în forță și pot opri scăderea.'
+            });
+            continue;
+        }
+
+        // 9b. Dark Cloud Cover (Nor Întunecat) - Bearish, 2 lumânări
+        if (isBullish2 && isBearish3 && c3.open > c2.close && c3.close < (c2.open + c2.close) / 2 && c3.close > c2.open && body2 > c2.close * 0.003) {
+            patterns.push({
+                time: c3.timestamp,
+                name: 'Dark Cloud Cover (Nor Întunecat)',
+                type: 'bearish',
+                tag: 'REVENIRE VÂNZĂTORI',
+                desc: 'Prima zi a fost puternic pozitivă, iar a doua a deschis chiar mai sus, dar a coborât și a șters peste jumătate din câștigul anterior. Vânzătorii revin în forță și pot opri creșterea.'
+            });
+            continue;
+        }
+
+        // 9c. Tweezer Bottom (Pensetă de Minim) - Bullish, 2 lumânări cu minime egale
+        if (isBearish2 && isBullish3 && Math.abs(c2.low - c3.low) <= c3.close * 0.0015 && body2 > c2.close * 0.002) {
+            patterns.push({
+                time: c3.timestamp,
+                name: 'Tweezer Bottom (Pensetă de Minim)',
+                type: 'bullish',
+                tag: 'MINIM DUBLU CONFIRMAT',
+                desc: 'Prețul a atins aproape exact același nivel minim două zile la rând și nu a mai putut coborî sub el. Vânzătorii au pierdut din putere, iar acest minim dublu poate marca o revenire.'
+            });
+            continue;
+        }
+
+        // 9d. Tweezer Top (Pensetă de Maxim) - Bearish, 2 lumânări cu maxime egale
+        if (isBullish2 && isBearish3 && Math.abs(c2.high - c3.high) <= c3.close * 0.0015 && body2 > c2.close * 0.002) {
+            patterns.push({
+                time: c3.timestamp,
+                name: 'Tweezer Top (Pensetă de Maxim)',
+                type: 'bearish',
+                tag: 'MAXIM DUBLU CONFIRMAT',
+                desc: 'Prețul a atins aproape exact același nivel maxim două zile la rând și nu a mai putut urca peste el. Cumpărătorii au pierdut din putere, iar acest maxim dublu poate marca o scădere.'
+            });
+            continue;
+        }
+
+        // 9e. Three White Soldiers (Trei Soldați Albi) - Bullish, 3 lumânări
+        if (isBullish1 && isBullish2 && isBullish3 &&
+            c2.close > c1.close && c3.close > c2.close &&
+            c2.open > c1.open && c2.open < c1.close &&
+            c3.open > c2.open && c3.open < c2.close &&
+            body1 > (c1.high - c1.low) * 0.55 && body2 > (c2.high - c2.low) * 0.55 && body3 > (c3.high - c3.low) * 0.55) {
+            patterns.push({
+                time: c3.timestamp,
+                name: 'Three White Soldiers (Trei Soldați Albi)',
+                type: 'bullish',
+                tag: 'CONTINUARE CREȘTERE',
+                desc: 'Trei zile la rând cu creșteri solide, fiecare închizând mai sus decât precedenta, fără ezitări mari. Arată o presiune de cumpărare constantă și susținută, nu doar un puseu izolat.'
+            });
+            continue;
+        }
+
+        // 9f. Three Black Crows (Trei Ciori Negre) - Bearish, 3 lumânări
+        if (isBearish1 && isBearish2 && isBearish3 &&
+            c2.close < c1.close && c3.close < c2.close &&
+            c2.open < c1.open && c2.open > c1.close &&
+            c3.open < c2.open && c3.open > c2.close &&
+            body1 > (c1.high - c1.low) * 0.55 && body2 > (c2.high - c2.low) * 0.55 && body3 > (c3.high - c3.low) * 0.55) {
+            patterns.push({
+                time: c3.timestamp,
+                name: 'Three Black Crows (Trei Ciori Negre)',
+                type: 'bearish',
+                tag: 'CONTINUARE SCĂDERE',
+                desc: 'Trei zile la rând cu scăderi solide, fiecare închizând mai jos decât precedenta, fără ezitări mari. Arată o presiune de vânzare constantă și susținută, nu doar un puseu izolat.'
+            });
+            continue;
+        }
+
         // 9. Spinning Top (Ezitare / Titirez)
         if (body3 > 0 && body3 <= total3 * 0.25 && wickUp3 > body3 && wickDown3 > body3 && total3 > (c3.close * 0.005)) {
             patterns.push({
@@ -1044,8 +1124,8 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Doji (Cruce de Indecizie)',
                 type: 'neutral',
-                tag: 'ECHILIBRU BURSURILOR',
-                desc: 'Prețul de închidere este aproape identic cu cel de la deschidere. Cumpărătorii și vânzătorii sunt la egalitate perfectă. Deseori anunță oprirea mișcării actuale.'
+                tag: 'INDECIZIE A PIEȚEI',
+                desc: 'Prețul a deschis și a închis aproape la fel — cumpărătorii și vânzătorii sunt la egalitate perfectă și niciuna dintre tabere nu a câștigat ziua. Nu arată singur o direcție; urmărește următoarele lumânări ca să vezi încotro se rupe echilibrul.'
             });
             continue;
         }
