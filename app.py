@@ -178,16 +178,17 @@ def parse_bvb_metrics(symbol):
             "P/BV": 0.0,
             "EPS": 0.0,
             "DIVY": 0.0,
-            "Beta": 1.0
+            "Beta": 1.0,
+            "NumarInstrumente": 0
         }
-        
+
         # Parse metrics table rows
         for row in soup.find_all('tr'):
             cells = row.find_all(['td', 'th'])
             if len(cells) >= 2:
                 label = cells[0].text.strip()
                 val = cells[1].text.strip().replace('.', '').replace(',', '.')
-                
+
                 try:
                     if 'Capitalizare' in label:
                         metrics["Capitalizare"] = float(val)
@@ -201,14 +202,23 @@ def parse_bvb_metrics(symbol):
                         metrics["DIVY"] = float(val)
                     elif 'Beta' in label:
                         metrics["Beta"] = float(val)
+                    elif 'Numar total instrumente' in label:
+                        metrics["NumarInstrumente"] = float(val)
                 except ValueError:
                     pass
-        
+
+        # ETFs/fund units don't publish "Capitalizare" on BVB (they show NAV instead) -
+        # fall back to price x total units outstanding, the same thing "Capitalizare"
+        # represents for regular stocks (price x shares outstanding).
+        market_cap_val = metrics["Capitalizare"]
+        if market_cap_val <= 0 and metrics["NumarInstrumente"] > 0 and price_val > 0:
+            market_cap_val = price_val * metrics["NumarInstrumente"]
+
         return {
             "name": name_val,
             "price": price_val,
             "variation": variation,
-            "market_cap": metrics["Capitalizare"],
+            "market_cap": market_cap_val,
             "pe": metrics["PER"],
             "pb": metrics["P/BV"],
             "eps": metrics["EPS"],
