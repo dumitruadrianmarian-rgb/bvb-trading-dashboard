@@ -1524,9 +1524,9 @@ function setupSearch() {
                     : `<span class="suggestion-badge local">Watchlist</span>`;
                 
                 item.innerHTML = `
-                    <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                    <div class="suggestion-info">
                         <span class="suggestion-symbol">${stock.symbol}</span>
-                        <span class="suggestion-name" style="font-size: 250px; max-width: 250px; text-align: left;" title="${stock.name}">${stock.name}</span>
+                        <span class="suggestion-name" title="${stock.name}">${stock.name}</span>
                     </div>
                     ${indicator}
                 `;
@@ -1558,11 +1558,13 @@ function setupSearch() {
                 const addOption = document.createElement("div");
                 addOption.className = "suggestion-item add-custom-ticker-option";
                 addOption.innerHTML = `
-                    <span class="suggestion-symbol">
-                        <i class="ph-duotone ph-plus-circle"  style="font-size: 14px; width: 14px; height: 14px; margin-right: 6px; display: inline-block; vertical-align: middle;"></i>
-                        Adaugă "${query}"
-                    </span>
-                    <span class="suggestion-name">Importă de pe BVB</span>
+                    <div class="suggestion-info">
+                        <span class="suggestion-symbol">
+                            <i class="ph-duotone ph-plus-circle" style="font-size: 14px; width: 14px; height: 14px; margin-right: 6px; display: inline-block; vertical-align: middle;"></i>
+                            Adaugă "${query}"
+                        </span>
+                        <span class="suggestion-name">Importă de pe BVB</span>
+                    </div>
                 `;
                 addOption.addEventListener("click", () => {
                     addNewStockFromServer(query);
@@ -1583,9 +1585,9 @@ function setupSearch() {
                     const item = document.createElement("div");
                     item.className = "suggestion-item";
                     item.innerHTML = `
-                        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                        <div class="suggestion-info">
                             <span class="suggestion-symbol">${stock.symbol}</span>
-                            <span class="suggestion-name" style="font-size: 250px; max-width: 250px; text-align: left;">${stock.name}</span>
+                            <span class="suggestion-name" title="${stock.name}">${stock.name}</span>
                         </div>
                         <span class="suggestion-badge local">Watchlist</span>
                     `;
