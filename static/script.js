@@ -806,17 +806,32 @@ function updateActiveTickerDetails(symbol) {
     document.getElementById("stat-mcap").innerText = mCapText;
     
     // New Broker Stats
+    // Graham's intrinsic value formula (√(22.5 × EPS × Valoare Contabilă/Acțiune)) is only
+    // defined for profitable companies - a negative/zero EPS can't produce a meaningful
+    // "fair value", so we surface *why* it's N/A instead of leaving it unexplained.
     const intrinsic = stock.intrinsic_value;
-    document.getElementById("stat-intrinsic").innerText = intrinsic > 0 ? intrinsic.toFixed(2) + " RON" : "N/A";
-    
+    const intrinsicEl = document.getElementById("stat-intrinsic");
     const safety = stock.margin_of_safety;
     const safetyEl = document.getElementById("stat-safety");
-    if (intrinsic > 0 && safety !== undefined) {
+
+    if (intrinsic > 0) {
+        intrinsicEl.innerText = intrinsic.toFixed(2) + " RON";
+        intrinsicEl.title = "";
         safetyEl.innerText = (safety >= 0 ? "+" : "") + safety.toFixed(1) + "%";
         safetyEl.className = "stat-value " + (safety > 10 ? "val-up" : (safety < -10 ? "val-down" : "val-neutral"));
+        safetyEl.title = "";
+    } else if (!(stock.eps > 0)) {
+        intrinsicEl.innerText = "N/A (pierdere)";
+        intrinsicEl.title = "Compania raportează pierdere pe acțiune (EPS negativ sau zero) - valoarea intrinsecă nu se poate calcula.";
+        safetyEl.innerText = "N/A (pierdere)";
+        safetyEl.className = "stat-value val-neutral";
+        safetyEl.title = intrinsicEl.title;
     } else {
+        intrinsicEl.innerText = "N/A (fără P/B)";
+        intrinsicEl.title = "Lipsește raportul preț/valoare contabilă (P/B) necesar calculului.";
         safetyEl.innerText = "N/A";
         safetyEl.className = "stat-value val-neutral";
+        safetyEl.title = intrinsicEl.title;
     }
     
     const beta = stock.beta || 1.0;
