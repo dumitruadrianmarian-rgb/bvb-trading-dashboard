@@ -179,7 +179,8 @@ def parse_bvb_metrics(symbol):
             "EPS": 0.0,
             "DIVY": 0.0,
             "Beta": 1.0,
-            "NumarInstrumente": 0
+            "NumarInstrumente": 0,
+            "Tip": ""
         }
 
         # Parse metrics table rows
@@ -207,12 +208,19 @@ def parse_bvb_metrics(symbol):
                 except ValueError:
                     pass
 
+                if label == 'Tip:':
+                    metrics["Tip"] = cells[1].text.strip()
+
         # ETFs/fund units don't publish "Capitalizare" on BVB (they show NAV instead) -
         # fall back to price x total units outstanding, the same thing "Capitalizare"
         # represents for regular stocks (price x shares outstanding).
         market_cap_val = metrics["Capitalizare"]
         if market_cap_val <= 0 and metrics["NumarInstrumente"] > 0 and price_val > 0:
             market_cap_val = price_val * metrics["NumarInstrumente"]
+
+        # Fund/ETF units don't have earnings (EPS/P-E) or book value (P/B) at all - that's
+        # not the same "N/A" as a loss-making company, so flag it for the frontend.
+        is_fund = 'fond' in metrics["Tip"].lower() or metrics["NumarInstrumente"] > 0
 
         return {
             "name": name_val,
@@ -223,7 +231,8 @@ def parse_bvb_metrics(symbol):
             "pb": metrics["P/BV"],
             "eps": metrics["EPS"],
             "div_yield": metrics["DIVY"],
-            "beta": metrics["Beta"]
+            "beta": metrics["Beta"],
+            "is_fund": is_fund
         }
     except Exception as e:
         print(f"Error scraping BVB for {symbol}: {e}")
@@ -625,6 +634,7 @@ def build_stock_object(symbol, fallback_name, bvb_data, tech, history):
         "beta": bvb_data.get("beta", 1.0),
         "intrinsic_value": round(intrinsic_value, 2) if intrinsic_value else 0.0,
         "margin_of_safety": round(margin_of_safety, 1) if margin_of_safety else 0.0,
+        "is_fund": bvb_data.get("is_fund", False),
         "sector": SECTORS.get(symbol, "Altele"),
         "technical": tech,
         "history": history[-30:] if history else []

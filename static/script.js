@@ -820,6 +820,12 @@ function updateActiveTickerDetails(symbol) {
         safetyEl.innerText = (safety >= 0 ? "+" : "") + safety.toFixed(1) + "%";
         safetyEl.className = "stat-value " + (safety > 10 ? "val-up" : (safety < -10 ? "val-down" : "val-neutral"));
         safetyEl.title = "";
+    } else if (stock.is_fund) {
+        intrinsicEl.innerText = "N/A (fond)";
+        intrinsicEl.title = "Fondurile/ETF-urile nu au profit pe acțiune (EPS) - formula Graham de valoare intrinsecă se aplică doar acțiunilor individuale.";
+        safetyEl.innerText = "N/A (fond)";
+        safetyEl.className = "stat-value val-neutral";
+        safetyEl.title = intrinsicEl.title;
     } else if (!(stock.eps > 0)) {
         intrinsicEl.innerText = "N/A (pierdere)";
         intrinsicEl.title = "Compania raportează pierdere pe acțiune (EPS negativ sau zero) - valoarea intrinsecă nu se poate calcula.";
