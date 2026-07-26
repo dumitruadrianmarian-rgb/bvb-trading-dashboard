@@ -1355,7 +1355,9 @@ function renderChart() {
             }
         },
         grid: {
-            borderColor: document.documentElement.classList.contains("theme-light") ? 'rgba(15, 23, 42, 0.06)' : 'rgba(255, 255, 255, 0.04)',
+            // App UI is always light-themed (no dark mode in style.css), so chart
+            // chrome must stay in light colors regardless of the day/night clock toggle.
+            borderColor: 'rgba(15, 23, 42, 0.06)',
             strokeDashArray: 4,
             xaxis: {
                 lines: {
@@ -1364,7 +1366,7 @@ function renderChart() {
             }
         },
         theme: {
-            mode: document.documentElement.classList.contains("theme-light") ? 'light' : 'dark'
+            mode: 'light'
         },
         tooltip: {
             shared: true,
@@ -1384,7 +1386,7 @@ function renderChart() {
             position: 'top',
             horizontalAlign: 'right',
             labels: {
-                colors: document.documentElement.classList.contains("theme-light") ? '#0f172a' : '#f3f4f6'
+                colors: '#0f172a'
             }
         }
     };
@@ -2599,10 +2601,11 @@ function updatePortfolioChart(labels, series) {
     
     document.getElementById("portfolio-chart-card").style.display = "block";
     
-    const isLightTheme = document.documentElement.classList.contains("theme-light");
-    const textColor = isLightTheme ? "#0f172a" : "#ffffff";
-    const mutedColor = isLightTheme ? "#64748b" : "rgba(255, 255, 255, 0.5)";
-    const strokeColor = isLightTheme ? "#ffffff" : "#1e293b";
+    // App UI is always light-themed (no dark mode in style.css), so chart
+    // chrome must stay in light colors regardless of the day/night clock toggle.
+    const textColor = "#0f172a";
+    const mutedColor = "#64748b";
+    const strokeColor = "#ffffff";
     
     const options = {
         series: series,
@@ -2707,7 +2710,7 @@ function updatePortfolioChart(labels, series) {
             }
         },
         tooltip: {
-            theme: isLightTheme ? 'light' : 'dark',
+            theme: 'light',
             y: {
                 formatter: function (val) {
                     return val.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
