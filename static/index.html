@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>RoInvest Hub - BVB Trading Dashboard</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- ApexCharts for Advanced Stock Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- PWA & Favicon Metadata -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=5.0">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=5.0">
+    <link rel="manifest" href="/manifest.json?v=5.0">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RoInvest BVB">
+    
+    <!-- FORCE CACHE BUST: unregister old service workers -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(reg => reg.unregister());
+        });
+        // Also clear all caches
+        if ('caches' in window) {
+          caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+        }
+      }
+    </script>
+    <!-- CSS Style Link -->
+    <link rel="stylesheet" href="style.css?v=8.1">
+</head>
+<body>
+    <div class="app-layout">
+        <nav class="app-nav">
+            <div class="nav-brand">
+                <div class="brand-icon">
+                    <i class="ph-duotone ph-trend-up"></i>
+                </div>
+                <span class="brand-name">RoInvest Hub</span>
+            </div>
+            <div class="nav-links">
+                <button class="nav-link active" data-tab="overview">
+                    <i class="ph-duotone ph-squares-four"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-link" data-tab="recommendations">
+                    <i class="ph-duotone ph-medal"></i>
+                    <span>Recomandări</span>
+                </button>
+                <button class="nav-link" data-tab="portfolio">
+                    <i class="ph-duotone ph-wallet"></i>
+                    <span>Portofoliu Virtual</span>
+                </button>
+                <button class="nav-link" data-tab="analysis">
+                    <i class="ph-duotone ph-chart-line-up"></i>
+                    <span>Analiză Tehnică</span>
+                </button>
+                <button class="nav-link" data-tab="watchlist">
+                    <i class="ph-duotone ph-list-dashes"></i>
+                    <span>Watchlist</span>
+                </button>
+                <button class="nav-link" data-tab="alerts">
+                    <i class="ph-duotone ph-bell-ringing"></i>
+                    <span>Alerte Preț</span>
+                </button>
+            </div>
+            <div class="nav-footer">
+                <div class="sidebar-actions">
+                    <button class="sidebar-action-btn">
+                        <span class="status-indicator online" style="margin: 0; padding: 0; border: none; font-size: 10px;"></span>
+                        <span style="font-size: 0.8rem; font-weight: 600; margin-left: 5px;">BVB Sync</span>
+                    </button>
+                    <button class="sidebar-action-btn" id="market-status-badge">
+                        <span class="status-indicator" style="margin: 0; padding: 0; border: none; font-size: 10px;"></span>
+                        <span id="market-status-text" style="font-size: 0.8rem; font-weight: 600; margin-left: 5px;">Bursă: Închisă</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="app-main">
+            <header class="main-header">
+                <div class="title-container">
+                    <h1 id="view-title">Bursa de Valori București</h1>
+                    <span class="status-indicator online">BVB Live Sync</span>
+                </div>
+                <div class="header-actions">
+                    <div class="search-container" style="display: inline-block; position: relative;">
+                        <input type="text" id="ticker-search-input" placeholder="Caută (ex: TLV)..." style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.9rem;" autocomplete="off">
+                        <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
+                    </div>
+                    <div class="status-indicator clock-pill" style="font-size: 0.75rem;">
+                        <span id="live-time-clock">--:--:--</span><span class="clock-sep"> | <span id="last-update-time">Se încarcă...</span></span>
+                    </div>
+                    <button class="header-btn" id="refresh-data-btn">
+                        <i class="ph-duotone ph-arrows-clockwise"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Tab 1: Dashboard -->
+            <div class="tab-pane active" id="tab-overview">
+                <section class="top-indices">
+                    <div class="index-card">
+                        <div class="index-header">
+                            <span class="index-name">Indicele BET</span>
+                            <span class="index-change positive">+0.85%</span>
+                        </div>
+                        <div class="index-value">18.420,50 RON</div>
+                        <div class="index-footer">BVB Capital Market Index</div>
+                    </div>
+                    <div class="index-card">
+                        <div class="index-header">
+                            <span class="index-name">Top Tranzacționat</span>
+                            <span class="index-change positive" id="top-traded-change">+3.11%</span>
+                        </div>
+                        <div class="index-value" id="top-traded-sym">TLV</div>
+                        <div class="index-footer" id="top-traded-name">Banca Transilvania S.A.</div>
+                    </div>
+                    <div class="index-card">
+                        <div class="index-header">
+                            <span class="index-name">Randament Mediu DIVY</span>
+                            <span class="index-change neutral">EOD Stats</span>
+                        </div>
+                        <div class="index-value" id="avg-divy">3.25%</div>
+                        <div class="index-footer">Media companiilor BET</div>
+                    </div>
+                    <div class="index-card">
+                        <div class="index-header">
+                            <span class="index-name">Sentimentul Pieței BVB</span>
+                            <span class="index-change neutral" id="market-sentiment-status">NEUTRU</span>
+                        </div>
+                        <div class="index-value" id="market-sentiment-value">50.0%</div>
+                        <div class="index-footer" id="market-sentiment-desc">Index Fear & Greed BVB</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab 2: Recommendations -->
+            <div class="tab-pane" id="tab-recommendations">
+                <section class="recommendations-section" id="recommendations">
+                    <div class="section-title">
+                        <i class="ph-duotone ph-medal"></i>
+                        <h2>Semnale și Recomandări de Tranzacționare</h2>
+                    </div>
+                
+                <div class="recommendations-grid">
+                    <!-- Buy Panel -->
+                    <div class="rec-panel buy-panel">
+                        <div class="panel-header">
+                            <i class="ph-duotone ph-arrow-circle-up" ></i>
+                            <h3>Recomandări de Cumpărare (BUY)</h3>
+                        </div>
+                        <div class="rec-list" id="buy-recommendations-list">
+                            <!-- Populated by JS -->
+                            <div class="loading-placeholder">Se analizează indicatorii BVB...</div>
+                        </div>
+                    </div>
+
+                    <!-- Sell Panel -->
+                    <div class="rec-panel sell-panel">
+                        <div class="panel-header">
+                            <i class="ph-duotone ph-arrow-circle-down" ></i>
+                            <h3>Recomandări de Vânzare (SELL)</h3>
+                        </div>
+                        <div class="rec-list" id="sell-recommendations-list">
+                            <!-- Populated by JS -->
+                            <div class="loading-placeholder">Se analizează indicatorii BVB...</div>
+                        </div>
+                    </div>
+                </div> <!-- END recommendations-grid -->
+                
+                <!-- Dividend Calendar Sub-Section -->
+                <div class="rec-panel dividend-calendar-panel" style="margin-top: 25px;">
+                    <div class="panel-header">
+                        <i class="ph-duotone ph-calendar-blank" ></i>
+                        <h3>Calendarul de Dividende Estimate BVB (Sezonul 2026)</h3>
+                    </div>
+                    <div class="table-container" style="margin-top: 15px;">
+                        <table class="market-table">
+                            <thead>
+                                <tr>
+                                    <th>Companie</th>
+                                    <th>Dividend Estimativ</th>
+                                    <th>Randament (Yield)</th>
+                                    <th>Ex-Date</th>
+                                    <th>Data Plății</th>
+                                    <th>Status Distribuție</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dividend-calendar-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            </div>
+
+            <!-- Tab 3: Portfolio -->
+            <div class="tab-pane" id="tab-portfolio">
+                <section class="portfolio-section" id="portfolio">
+                    <div class="section-title">
+                        <i class="ph-duotone ph-wallet"></i>
+                        <h2>Portofoliu Virtual &amp; Tracker P&amp;L</h2>
+                    </div>
+
+                <!-- Summary Cards — exact same structure as top BET indices widgets -->
+                <section class="top-indices" style="margin-bottom: 25px;">
+                    <div class="index-card">
+                        <div class="index-header">
+                            <span class="index-name">Valoare Portofoliu</span>
+                            <span class="index-change neutral" style="background:rgba(59,130,246,0.12);color:var(--color-blue);font-size:11px;">LIVE</span>
+                        </div>
+                        <div class="index-value" id="port-total-value">0.00 RON</div>
+                        <div class="index-footer">Valoarea curentă de piață a activelor</div>
+                    </div>
+                    <div class="index-card">
+                        <div class="index-header">
+                            <span class="index-name">Cost Total Investit</span>
+                            <span class="index-change neutral" style="font-size:11px;">Cost Basis</span>
+                        </div>
+                        <div class="index-value" id="port-total-cost">0.00 RON</div>
+                        <div class="index-footer">Capitalul total alocat tranzacțiilor</div>
+                    </div>
+                    <div class="index-card">
+                        <div class="index-header">
+                            <span class="index-name">Profit / Pierdere (P&amp;L)</span>
+                            <span class="index-change neutral" id="port-total-pl-pct" style="font-size:11px;">0.00%</span>
+                        </div>
+                        <div class="index-value" id="port-total-pl">0.00 RON</div>
+                        <div class="index-footer">Randamentul total al investiției</div>
+                    </div>
+                </section>
+
+                <!-- Main portfolio layout -->
+                <div class="portfolio-layout">
+
+                    <!-- Left column: form + table -->
+                    <div class="portfolio-main-col">
+
+                        <!-- Add Transaction — same rec-panel style as recommendations -->
+                        <div class="rec-panel portfolio-add-panel">
+                            <div class="panel-header">
+                                <i class="ph-duotone ph-plus-circle" ></i>
+                                <h3>Adaugă Tranzacție</h3>
+                            </div>
+                            <form id="portfolio-add-form" class="portfolio-form">
+                                <!-- Symbol -->
+                                <div class="port-field">
+                                    <label class="port-label">Simbol Activ</label>
+                                    <div class="port-symbol-wrap">
+                                        <div class="search-box port-search-box">
+                                            <i  class="ph-duotone ph-magnifying-glass search-icon" style="font-size: 14px; width:14px;height:14px;"></i>
+                                            <input type="text" id="port-add-symbol" placeholder="Caută (ex: TLV)..." autocomplete="off" class="port-search-input" required>
+                                        </div>
+                                        <div id="port-search-suggestions" class="search-suggestions port-suggestions"></div>
+                                    </div>
+                                </div>
+                                <!-- Quantity -->
+                                <div class="port-field">
+                                    <label class="port-label">Cantitate</label>
+                                    <input type="number" id="port-add-qty" min="0.00001" step="any" placeholder="ex: 100" class="port-input" required>
+                                </div>
+                                <!-- Price -->
+                                <div class="port-field">
+                                    <label class="port-label">Preț Achiziție (RON)</label>
+                                    <input type="number" id="port-add-price" min="0.0001" step="any" placeholder="ex: 40.20" class="port-input" required>
+                                    <div id="port-current-price-hint" style="font-size: 10px; color: var(--color-blue); min-height: 12px; margin-top: 2px;"></div>
+                                </div>
+                                <!-- Submit -->
+                                <div class="port-field port-submit-field">
+                                    <label class="port-label">&nbsp;</label>
+                                    <button type="submit" class="btn-reset-watchlist port-submit-btn">
+                                        <i class="ph-duotone ph-plus-circle"  style="font-size: 15px; width:15px;height:15px;"></i>
+                                        Adaugă Activ
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Holdings Table — same rec-panel style -->
+                        <div class="rec-panel portfolio-table-panel">
+                            <div class="panel-header">
+                                <i class="ph-duotone ph-chart-bar" ></i>
+                                <h3>Dețineri Curente</h3>
+                            </div>
+                            <div class="table-container portfolio-table-container">
+                                <table class="market-table portfolio-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Simbol / Deținere</th>
+                                            <th>Preț / Variație Azi</th>
+                                            <th>Achiziție / Cost</th>
+                                            <th>Dividende Încasate</th>
+                                            <th>Variație Totală (P&amp;L)</th>
+                                            <th>Pondere / Cantitate</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="portfolio-table-body">
+                                        <tr>
+                                            <td colspan="7" class="portfolio-empty-row">
+                                                Nicio deținere. Adaugă prima tranzacție folosind formularul de mai sus.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Realized Gains and Losses Panel -->
+                        <div class="rec-panel realized-table-panel" style="margin-top: 25px;">
+                            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="ph-duotone ph-bank" ></i>
+                                    <h3>Tranzacții Închise (Profit/Pierdere Realizată) &amp; Impozite</h3>
+                                </div>
+                                <button onclick="showRealizedForm()" style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:var(--color-blue);font-size:12px;font-weight:700;cursor:pointer;">
+                                    <i class="ph-duotone ph-plus"  style="font-size: 13px; width:13px;height:13px;"></i> Adaugă
+                                </button>
+                            </div>
+
+                            <!-- Add / Edit Form (hidden by default) -->
+                            <div id="realized-form-container" style="display:none; padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; margin-bottom: 16px;">
+                                <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:12px;" id="realized-form-title">Adaugă Tranzacție Realizată</div>
+                                <input type="hidden" id="realized-edit-index" value="-1">
+                                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px;align-items:end;">
+                                    <div>
+                                        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Simbol / Descriere</label>
+                                        <input type="text" id="realized-form-symbol" placeholder="ex: TLV, Cheltuieli..." style="width:100%;padding:7px 10px;border-radius:6px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:13px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Câștig (RON)</label>
+                                        <input type="number" id="realized-form-gain" value="0" step="0.01" min="0" style="width:100%;padding:7px 10px;border-radius:6px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:13px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Pierdere (RON, negativ)</label>
+                                        <input type="number" id="realized-form-loss" value="0" step="0.01" style="width:100%;padding:7px 10px;border-radius:6px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:13px;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Impozit (RON)</label>
+                                        <input type="number" id="realized-form-tax" value="0" step="0.01" min="0" style="width:100%;padding:7px 10px;border-radius:6px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary);font-size:13px;">
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+                                    <button onclick="hideRealizedForm()" style="padding:6px 16px;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-muted);font-size:12px;cursor:pointer;">Anulează</button>
+                                    <button onclick="saveRealizedEntry()" style="padding:6px 16px;border-radius:6px;background:var(--color-blue);border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Salvează</button>
+                                </div>
+                            </div>
+
+                            <div class="table-container portfolio-table-container">
+                                <table class="market-table portfolio-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Simbol / Descriere</th>
+                                            <th style="text-align: right;">Câștig (Profit)</th>
+                                            <th style="text-align: right;">Pierdere (Loss)</th>
+                                            <th style="text-align: right;">Impozit Reținut</th>
+                                            <th style="text-align: right;">Rezultat Net</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="realized-table-body">
+                                        <!-- Dinamically injected by JS -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="font-weight: 700; border-top: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.02);">
+                                            <td>Total Realizat</td>
+                                            <td style="text-align: right; color: var(--color-green);" id="realized-total-gain">0.00 RON</td>
+                                            <td style="text-align: right; color: var(--color-red);" id="realized-total-loss">0.00 RON</td>
+                                            <td style="text-align: right; color: #f59e0b;" id="realized-total-tax">0.00 RON</td>
+                                            <td style="text-align: right;" id="realized-total-net">0.00 RON</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div><!-- /.portfolio-main-col -->
+
+                    <!-- Right column: donut chart -->
+                    <div id="portfolio-chart-card" class="rec-panel portfolio-chart-col" style="display:none;">
+                        <div class="panel-header">
+                            <i class="ph-duotone ph-chart-pie-slice" ></i>
+                            <h3>Alocare Portofoliu</h3>
+                        </div>
+                        <div class="portfolio-chart-body">
+                            <div id="portfolio-allocation-chart"></div>
+                            <div id="portfolio-legend" class="custom-portfolio-legend"></div>
+                            <div class="portfolio-advice-box" id="portfolio-diversification-advice" style="margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 0.85rem; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.15); display: none;">
+                                <!-- Advice populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /.portfolio-layout -->
+
+            </section>
+            </div>
+
+            <!-- Tab 4: Technical Analysis -->
+            <div class="tab-pane" id="tab-analysis">
+                <section class="chart-section" id="chart-section">
+                    <div class="section-title">
+                        <i class="ph-duotone ph-chart-line-up"></i>
+                        <h2>Analiză Grafică & Indicatori Tehnici</h2>
+                    </div>
+                
+                <div class="chart-layout">
+                    <!-- Active Ticker Info -->
+                    <div class="chart-sidebar">
+                        <div class="active-ticker-details">
+                            <div class="ticker-header">
+                                <span class="active-symbol" id="chart-symbol">TLV</span>
+                                <span class="active-variation positive" id="chart-variation">+3.11%</span>
+                            </div>
+                            <h3 class="active-name" id="chart-name">Banca Transilvania S.A.</h3>
+                            <div class="active-price-row">
+                                <span class="active-price" id="chart-price">41.10</span>
+                                <span class="currency">RON</span>
+                            </div>
+                        </div>
+                        
+                        <div class="ticker-stats-grid">
+                            <div class="stat-box">
+                                <span class="stat-label">P/E Ratio (PER)</span>
+                                <span class="stat-value" id="stat-pe">9.6</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">P/BV Ratio</span>
+                                <span class="stat-value" id="stat-pb">1.9</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Div. Yield (DIVY)</span>
+                                <span class="stat-value" id="stat-divy">3.12%</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">RSI (14-Zile)</span>
+                                <span class="stat-value" id="stat-rsi">52.3</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">YTD Return</span>
+                                <span class="stat-value" id="stat-ytd">+12.4%</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Capitalizare</span>
+                                <span class="stat-value" id="stat-mcap">44.8B</span>
+                            </div>
+                            <!-- New Broker Stats -->
+                            <div class="stat-box">
+                                <span class="stat-label">Valoare Intrinsecă</span>
+                                <span class="stat-value" id="stat-intrinsic">0.00 RON</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Margin of Safety</span>
+                                <span class="stat-value" id="stat-safety">0.0%</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Coeficient Beta</span>
+                                <span class="stat-value" id="stat-beta">1.0</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Sector Activitate</span>
+                                <span class="stat-value" id="stat-sector" style="font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Financiar</span>
+                            </div>
+                        </div>
+                        
+                        <div class="signals-summary" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div class="signal-gauge">
+                                <div class="gauge-label">Semnal Tehnic</div>
+                                <div class="gauge-value" id="active-signal-badge">HOLD</div>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+                                <span>Scor Tehnic Unificat:</span>
+                                <span id="stat-techscore" style="font-weight: 700; color: var(--text-primary);">50.0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- The Main Chart Container -->
+                    <div class="chart-container">
+                        <div class="chart-controls">
+                            <div class="chart-type-selectors">
+                                <button class="btn-chart-opt active" id="chart-range-1m">1 Lună</button>
+                                <button class="btn-chart-opt" id="chart-range-3m">3 Luni</button>
+                                <button class="btn-chart-opt" id="chart-range-1y">1 An</button>
+                                <button class="btn-chart-opt" id="chart-range-3y">3 Ani</button>
+                                <button class="btn-chart-opt" id="chart-range-5y">5 Ani</button>
+                            </div>
+                            <div class="chart-indicator-overlays">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="overlay-ma50" checked>
+                                    <span class="checkmark"></span> MA50 (50 Zile)
+                                </label>
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="overlay-ma200">
+                                    <span class="checkmark"></span> MA200 (200 Zile)
+                                </label>
+                            </div>
+                        </div>
+                        <div id="main-apex-chart"></div>
+                    </div>
+                </div>
+
+                
+                <!-- AI Trading Assistant Panel -->
+                <div class="ai-assistant-panel" style="margin-top: 1.5rem; background: var(--card-bg); border-radius: 16px; padding: 1.5rem; box-shadow: var(--neu-out);">
+                    <div class="news-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 256 256" style="color: #8b5cf6;"><path fill="currentColor" d="M208,104a80,80,0,1,0-80,80,8.02,8.02,0,0,1,8,8v16a8,8,0,0,1-16,0V192a96,96,0,1,1,96-96Zm-80,48a64,64,0,1,1,64-64A64.07,64.07,0,0,1,128,152Z"/></svg>
+                        <h3>Asistent AI: Pattern-uri Japoneze (Price Action)</h3>
+                    </div>
+                    <div id="ai-patterns-container" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                        <div class="loading-placeholder" style="color: var(--text-muted);">Analizez graficul curent...</div>
+                    </div>
+                </div>
+                
+                <!-- Stock Related News Feed -->
+                <div class="stock-news-panel">
+                    <div class="news-header">
+                        <i class="ph-duotone ph-newspaper" ></i>
+                        <h3>Știri și Analize Corelate: <span id="news-ticker-label">TLV</span></h3>
+                    </div>
+                    <div class="news-grid" id="news-articles-container">
+                        <!-- Populated by JS -->
+                        <div class="loading-placeholder">Se încarcă știri din surse oficiale...</div>
+                    </div>
+                </div>
+            </section>
+            </div>
+
+            <!-- Tab 5: Watchlist -->
+            <div class="tab-pane" id="tab-watchlist">
+                <section class="watchlist-section" id="watchlist">
+                <div class="section-title-wrapper">
+                    <div class="section-title">
+                        <i class="ph-duotone ph-list-dashes" ></i>
+                        <h2>Piața BET - Watchlist Monitor</h2>
+                    </div>
+                    <div class="watchlist-actions" style="display: flex; gap: 10px;">
+                        <button class="btn-clear-watchlist" id="clear-watchlist-btn" onclick="clearWatchlist()" title="Golește toate simbolurile din listă">
+                            <i class="ph-duotone ph-trash" ></i>
+                            Golire Listă
+                        </button>
+                        <button class="btn-reset-watchlist" id="reset-watchlist-btn" onclick="resetWatchlist()" title="Resetează la activele implicite BVB">
+                            <i class="ph-duotone ph-arrow-counter-clockwise" ></i>
+                            Restaurare Implicite
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="market-table">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortTable('symbol')">Companie <span class="sort-icon" id="sort-icon-symbol">↕</span></th>
+                                <th class="sortable" onclick="sortTable('price')">Preț Curent <span class="sort-icon" id="sort-icon-price">↕</span></th>
+                                <th class="sortable" onclick="sortTable('variation')">Schimbare (24h) <span class="sort-icon" id="sort-icon-variation">↕</span></th>
+                                <th class="sortable" onclick="sortTable('ytd')">Randament YTD <span class="sort-icon" id="sort-icon-ytd">↕</span></th>
+                                <th class="sortable" onclick="sortTable('pe')">P/E (PER) <span class="sort-icon" id="sort-icon-pe">↕</span></th>
+                                <th class="sortable" onclick="sortTable('pb')">P/BV <span class="sort-icon" id="sort-icon-pb">↕</span></th>
+                                <th class="sortable" onclick="sortTable('divy')">Div. Yield <span class="sort-icon" id="sort-icon-divy">↕</span></th>
+                                <th class="sortable" onclick="sortTable('rsi')">RSI (14) <span class="sort-icon" id="sort-icon-rsi">↕</span></th>
+                                <th class="sortable" onclick="sortTable('signal')">Semnal <span class="sort-icon" id="sort-icon-signal">↕</span></th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlist-table-body">
+                            <!-- Populated by JS -->
+                            <tr>
+                                <td colspan="10" class="table-loading">Se încarcă datele BVB...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            </div>
+
+            <!-- Tab 6: Alerts -->
+            <div class="tab-pane" id="tab-alerts">
+                <section class="alerts-section" id="alerts-section">
+                <div class="section-title-wrapper">
+                    <div class="section-title">
+                        <i class="ph-duotone ph-bell-ringing"></i>
+                        <h2>Management Alerte Preț & Telegram</h2>
+                    </div>
+                </div>
+                
+                <div class="alerts-dashboard-layout">
+                    <!-- Top Row: Forms (Add Alert & Telegram Config) -->
+                    <div class="alerts-row alerts-forms-row">
+                        <!-- Card 1: Add Alert -->
+                        <div class="alert-card-panel card-add">
+                            <div class="alert-card-title">
+                                <i class="ph-duotone ph-bell-plus" style="font-size: 20px; color: var(--color-blue);"></i>
+                                Adaugă Alertă Nouă
+                            </div>
+                            <div class="alert-form-grid add-alert-form-grid">
+                                <div class="alert-form-group">
+                                    <label class="alert-form-label">Simbol</label>
+                                    <input type="text" id="manage-alert-symbol" placeholder="ex: TLV" class="alert-input" style="text-transform: uppercase;">
+                                </div>
+                                <div class="alert-form-group">
+                                    <label class="alert-form-label">Preț Țintă (RON)</label>
+                                    <input type="number" id="manage-alert-target" placeholder="Target" step="any" class="alert-input">
+                                </div>
+                                <div class="alert-form-group">
+                                    <label class="alert-form-label">Tip Alertă</label>
+                                    <select id="manage-alert-type" class="alert-input" style="appearance: none;">
+                                        <option value="buy">BUY (Sub preț)</option>
+                                        <option value="sell">SELL (Peste preț)</option>
+                                    </select>
+                                </div>
+                                <div class="alert-form-group">
+                                    <button id="btn-add-manage-alert" class="alert-btn alert-btn-blue">
+                                        <i class="ph-duotone ph-plus-circle" style="font-size: 16px;"></i> Adaugă
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Telegram Config -->
+                        <div class="alert-card-panel card-telegram">
+                            <div class="alert-card-title">
+                                <i class="ph-duotone ph-telegram-logo" style="font-size: 20px; color: #229ED9;"></i>
+                                Configurare & Testare Telegram Bot
+                            </div>
+                            <div class="alert-form-grid tg-form-grid">
+                                <div class="alert-form-group">
+                                    <label class="alert-form-label">Bot Token Telegram</label>
+                                    <input type="password" id="tg-token-input" placeholder="Token Telegram" class="alert-input">
+                                </div>
+                                <div class="alert-form-group">
+                                    <label class="alert-form-label">Chat ID Telegram</label>
+                                    <input type="text" id="tg-chatid-input" placeholder="ex: 620494446" class="alert-input">
+                                </div>
+                            </div>
+                            <div class="tg-actions-row">
+                                <button id="btn-save-telegram" class="alert-btn alert-btn-secondary">
+                                    <i class="ph-duotone ph-floppy-disk" style="font-size: 16px;"></i> Salvează
+                                </button>
+                                <button id="btn-test-telegram" class="alert-btn alert-btn-telegram">
+                                    <i class="ph-duotone ph-paper-plane-tilt" style="font-size: 16px;"></i> Trimite Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row: Tables (Active Alerts & History) -->
+                    <div class="alerts-row alerts-tables-row">
+                        <!-- Card 3: Active Alerts -->
+                        <div class="alert-card-panel card-active">
+                            <div class="alert-card-title">
+                                <i class="ph-duotone ph-list-checks" style="font-size: 20px; color: var(--color-green);"></i>
+                                Alerte Active
+                            </div>
+                            <div class="table-container">
+                                <table class="alerts-table" id="manage-alerts-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Simbol</th>
+                                            <th>Tip</th>
+                                            <th>Target</th>
+                                            <th>Acțiuni</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="manage-alerts-body">
+                                        <tr><td colspan="4" class="table-loading">Se încarcă alertele...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Alert History -->
+                        <div class="alert-card-panel card-history">
+                            <div class="alert-card-title">
+                                <i class="ph-duotone ph-clock-counter-clockwise" style="font-size: 20px; color: var(--color-blue);"></i>
+                                Istoric Alerte Declanșate
+                            </div>
+                            <div class="table-container">
+                                <table class="alerts-table" id="alert-history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Simbol</th>
+                                            <th>Tip</th>
+                                            <th>Țintă</th>
+                                            <th>Preț</th>
+                                            <th>Data/Ora</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="alert-history-body">
+                                        <tr><td colspan="6" class="table-loading">Se încarcă istoricul...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- JS Logic Script -->
+    <script src="script.js?v=8.0"></script>
+</body>
+</html>

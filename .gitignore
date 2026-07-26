@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+
+# Runtime state and secrets (Telegram bot token, portfolio, alerts)
+data/

@@ -1,0 +1,33 @@
+services:
+  bvb-dashboard:
+    build: .
+    container_name: bvb-trading-dashboard
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      # Local LAN Route (trade.home.srv - LAN only, no password)
+      - "traefik.http.routers.bvb-dashboard.rule=Host(`trade.home.srv`)"
+      - "traefik.http.routers.bvb-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.bvb-dashboard.tls=true"
+      - "traefik.http.routers.bvb-dashboard.middlewares=lan-only@file,secure-headers@file,rate-limit@file,custom-errors@file"
+
+      # External Public Internet Route (cozlas3n3.home.ro - Let's Encrypt SSL + Basic Auth)
+      - "traefik.http.routers.bvb-dashboard-ext.rule=Host(`cozlas3n3.home.ro`)"
+      - "traefik.http.routers.bvb-dashboard-ext.entrypoints=websecure"
+      - "traefik.http.routers.bvb-dashboard-ext.tls=true"
+      - "traefik.http.routers.bvb-dashboard-ext.tls.certresolver=myresolver"
+      - "traefik.http.routers.bvb-dashboard-ext.middlewares=basic-auth@file,secure-headers@file,rate-limit@file,custom-errors@file"
+      - "traefik.http.routers.bvb-dashboard-ext.service=bvb-dashboard"
+
+      # Service load balancer port
+      - "traefik.http.services.bvb-dashboard.loadbalancer.server.port=5050"
+    volumes:
+      - ./data:/app/data
+      - ./static:/app/static
+      - ./app.py:/app/app.py
+
+networks:
+  proxy:
+    external: true
