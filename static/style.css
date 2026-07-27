@@ -1155,7 +1155,12 @@ a { text-decoration: none; color: inherit; }
    the fields pushed that input out of line with the rest of the row. */
 .portfolio-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.85rem; align-items: start; }
 .port-field { display: flex; flex-direction: column; gap: 0.35rem; }
-.port-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+/* line-height: 1.5 (not the default "normal") so the invisible label above
+   the submit button always reserves the exact same height as the real text
+   labels next to it - "normal" resolves from font metrics, which can differ
+   slightly by browser/font-load timing and was throwing the button out of
+   line with the other fields. */
+.port-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); line-height: 1.5; }
 .port-input, .port-search-input {
     width: 100%; padding: 0.55rem 0.85rem;
     border: 1px solid var(--border); border-radius: 8px;
@@ -1165,6 +1170,10 @@ a { text-decoration: none; color: inherit; }
 .port-input:focus, .port-search-input:focus { border-color: var(--primary); outline: none; }
 .port-symbol-wrap { position: relative; }
 .port-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 200; }
+/* Explicit height (not left to padding + line-height to work out on its own)
+   so the symbol search box, plain inputs, and submit button are pixel-identical
+   in height across browsers instead of each computing it slightly differently. */
+.port-input, .search-box.port-search-box, .port-submit-btn { height: 2.65rem; box-sizing: border-box; }
 .search-box.port-search-box { display: flex; align-items: center; gap: 0.5rem; border: 1px solid var(--border); border-radius: 8px; padding: 0.45rem 0.75rem; background: var(--bg-card); }
 .btn-reset-watchlist, .port-submit-btn { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--primary); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.1rem; font-size: 0.88rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .btn-reset-watchlist:hover, .port-submit-btn:hover { opacity: 0.85; }
