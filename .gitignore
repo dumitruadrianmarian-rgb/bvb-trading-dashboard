@@ -1,5 +1,8 @@
 __pycache__/
 *.pyc
 
+# Leftover dev/debug screenshots (not app assets)
+/screen_*.png
+
 # Runtime state and secrets (Telegram bot token, portfolio, alerts)
 data/
