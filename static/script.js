@@ -375,6 +375,7 @@ function fetchData(callback = null) {
             
             // Populate Widgets
             updateTopWidgets();
+            renderTopMovers();
             
             // Refresh Alert History Table
             if (typeof renderAlertHistoryTable === "function") renderAlertHistoryTable();
@@ -607,6 +608,47 @@ function updateTopWidgets() {
     
     // 4. Trigger Price Alerts check
     checkPriceAlerts();
+}
+
+// Render Top Gainers / Losers widgets on the Dashboard tab
+function renderTopMovers() {
+    const gainersEl = document.getElementById("top-gainers-list");
+    const losersEl = document.getElementById("top-losers-list");
+    if (!gainersEl || !losersEl) return;
+
+    const ranked = stocks
+        .map(stock => ({
+            stock,
+            varVal: parseFloat(stock.variation.replace('%', '').replace('+', '').replace(',', '.'))
+        }))
+        .filter(r => !isNaN(r.varVal) && r.varVal !== 0);
+
+    const gainers = ranked.filter(r => r.varVal > 0).sort((a, b) => b.varVal - a.varVal).slice(0, 5);
+    const losers = ranked.filter(r => r.varVal < 0).sort((a, b) => a.varVal - b.varVal).slice(0, 5);
+
+    const renderRows = (list) => list.map(({ stock }) => {
+        const priceFormatted = stock.price.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+        const isUp = stock.variation.includes("+") || (!stock.variation.includes("-") && parseFloat(stock.variation) > 0);
+        return `
+            <div class="mover-row" onclick="selectTicker('${stock.symbol}'); switchTab('analysis');">
+                <div class="mover-identity">
+                    <span class="mover-symbol">${stock.symbol}</span>
+                    <span class="mover-name" title="${stock.name}">${stock.name}</span>
+                </div>
+                <div class="mover-figures">
+                    <span class="mover-price">${priceFormatted} RON</span>
+                    <span class="mover-change ${isUp ? 'val-up' : 'val-down'}">${stock.variation}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    gainersEl.innerHTML = gainers.length
+        ? renderRows(gainers)
+        : '<div class="loading-placeholder">Nicio creștere semnificativă azi.</div>';
+    losersEl.innerHTML = losers.length
+        ? renderRows(losers)
+        : '<div class="loading-placeholder">Nicio scădere semnificativă azi.</div>';
 }
 
 // Populate Recommendations Panels
@@ -927,6 +969,76 @@ function calculateMA(closes, period) {
 }
 
 
+// Small candlestick glyphs for the AI pattern list — each pattern gets a shape
+// that mirrors its actual candles (body/wick proportions, up to 3 candles),
+// instead of a generic up/down arrow, so a beginner can recognize the shape
+// on the real chart from the icon alone.
+function svgCandle(x, wickTop, bodyTop, bodyBottom, wickBottom, bullish, neutral) {
+    const color = neutral ? '#94a3b8' : (bullish ? '#10b981' : '#ef4444');
+    const w = 4;
+    const h = Math.max(bodyBottom - bodyTop, 1.4);
+    return `<line x1="${x}" y1="${wickTop}" x2="${x}" y2="${wickBottom}" stroke="${color}" stroke-width="1.4" stroke-linecap="round"/>` +
+           `<rect x="${x - w / 2}" y="${bodyTop}" width="${w}" height="${h}" rx="0.6" fill="${color}"/>`;
+}
+
+function patternIconSvg(candles) {
+    const inner = candles.map(c => svgCandle(c.x, c.wickTop, c.bodyTop, c.bodyBottom, c.wickBottom, c.bullish, c.neutral)).join('');
+    return `<svg viewBox="0 0 24 24" width="22" height="22" fill="none">${inner}</svg>`;
+}
+
+const PATTERN_ICONS = {
+    hammer: [{ x: 12, wickTop: 6, bodyTop: 6, bodyBottom: 9.5, wickBottom: 20, bullish: true }],
+    'shooting-star': [{ x: 12, wickTop: 4, bodyTop: 14.5, bodyBottom: 18, wickBottom: 18, bullish: false }],
+    'marubozu-bull': [{ x: 12, wickTop: 4, bodyTop: 4, bodyBottom: 20, wickBottom: 20, bullish: true }],
+    'marubozu-bear': [{ x: 12, wickTop: 4, bodyTop: 4, bodyBottom: 20, wickBottom: 20, bullish: false }],
+    doji: [{ x: 12, wickTop: 4, bodyTop: 11.3, bodyBottom: 12.7, wickBottom: 20, neutral: true }],
+    'spinning-top': [{ x: 12, wickTop: 3, bodyTop: 10, bodyBottom: 14, wickBottom: 21, neutral: true }],
+    'engulf-bull': [
+        { x: 8, wickTop: 9, bodyTop: 9, bodyBottom: 13, wickBottom: 13, bullish: false },
+        { x: 16, wickTop: 6, bodyTop: 6, bodyBottom: 18, wickBottom: 18, bullish: true }
+    ],
+    'engulf-bear': [
+        { x: 8, wickTop: 11, bodyTop: 11, bodyBottom: 15, wickBottom: 15, bullish: true },
+        { x: 16, wickTop: 6, bodyTop: 6, bodyBottom: 18, wickBottom: 18, bullish: false }
+    ],
+    'pierce-bull': [
+        { x: 8, wickTop: 6, bodyTop: 6, bodyBottom: 18, wickBottom: 18, bullish: false },
+        { x: 16, wickTop: 11, bodyTop: 11, bodyBottom: 20, wickBottom: 20, bullish: true }
+    ],
+    'pierce-bear': [
+        { x: 8, wickTop: 6, bodyTop: 6, bodyBottom: 18, wickBottom: 18, bullish: true },
+        { x: 16, wickTop: 4, bodyTop: 4, bodyBottom: 13, wickBottom: 13, bullish: false }
+    ],
+    'tweezer-bull': [
+        { x: 8, wickTop: 8, bodyTop: 8, bodyBottom: 14, wickBottom: 20, bullish: false },
+        { x: 16, wickTop: 6, bodyTop: 6, bodyBottom: 12, wickBottom: 20, bullish: true }
+    ],
+    'tweezer-bear': [
+        { x: 8, wickTop: 4, bodyTop: 10, bodyBottom: 16, wickBottom: 16, bullish: true },
+        { x: 16, wickTop: 4, bodyTop: 12, bodyBottom: 18, wickBottom: 18, bullish: false }
+    ],
+    'star-bull': [
+        { x: 4.5, wickTop: 5, bodyTop: 6, bodyBottom: 14, wickBottom: 15, bullish: false },
+        { x: 12, wickTop: 15, bodyTop: 16, bodyBottom: 18, wickBottom: 19, neutral: true },
+        { x: 19.5, wickTop: 7, bodyTop: 8, bodyBottom: 16, wickBottom: 17, bullish: true }
+    ],
+    'star-bear': [
+        { x: 4.5, wickTop: 9, bodyTop: 10, bodyBottom: 18, wickBottom: 19, bullish: true },
+        { x: 12, wickTop: 5, bodyTop: 6, bodyBottom: 8, wickBottom: 9, neutral: true },
+        { x: 19.5, wickTop: 6, bodyTop: 7, bodyBottom: 15, wickBottom: 16, bullish: false }
+    ],
+    'soldiers-bull': [
+        { x: 4.5, wickTop: 15, bodyTop: 16, bodyBottom: 20, wickBottom: 21, bullish: true },
+        { x: 12, wickTop: 10, bodyTop: 11, bodyBottom: 15, wickBottom: 16, bullish: true },
+        { x: 19.5, wickTop: 5, bodyTop: 6, bodyBottom: 10, wickBottom: 11, bullish: true }
+    ],
+    'crows-bear': [
+        { x: 4.5, wickTop: 3, bodyTop: 4, bodyBottom: 8, wickBottom: 9, bullish: false },
+        { x: 12, wickTop: 8, bodyTop: 9, bodyBottom: 13, wickBottom: 14, bullish: false },
+        { x: 19.5, wickTop: 13, bodyTop: 14, bodyBottom: 18, wickBottom: 19, bullish: false }
+    ]
+};
+
 function detectCandlePatterns(dataSlice) {
     const patterns = [];
     const recentSlice = dataSlice.slice(-40); // scan last 40 days
@@ -957,6 +1069,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Morning Star (Steaua Dimineții)',
                 type: 'bullish',
+                icon: 'star-bull',
                 tag: 'SEMNAL DE CREȘTERE',
                 desc: 'Scăderea anterioară a obosit, urmată de o pauză de ezitare și o revenire puternică a cumpărătorilor. Semnalează finalul perioadei slabe și o potențială urcare durabilă a prețului.'
             });
@@ -969,6 +1082,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Evening Star (Steaua Serii)',
                 type: 'bearish',
+                icon: 'star-bear',
                 tag: 'SEMNAL DE SCĂDERE',
                 desc: 'După o perioadă bună de creștere, piața a obosit și vânzătorii au preluat controlul. Este un avertisment timpuriu că prețul tinde să scadă și poate fi un moment bun pentru marcarea profitului.'
             });
@@ -981,6 +1095,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Hammer (Ciocan)',
                 type: 'bullish',
+                icon: 'hammer',
                 tag: 'RESPINGERE PREȚ MIC',
                 desc: 'Vânzătorii au încercat să scadă prețul în timpul zilei, dar cumpărătorii au intervenit în forță și l-au readus sus. Indică un minim atins și un potențial început de creștere.'
             });
@@ -993,6 +1108,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Shooting Star (Stea Căzătoare)',
                 type: 'bearish',
+                icon: 'shooting-star',
                 tag: 'OBOSEALĂ CUMPĂRĂTORI',
                 desc: 'Prețul a crescut mult în timpul zilei, dar cumpărătorii și-au pierdut puterea pe final, iar vânzătorii l-au împins înapoi jos. Sugerează o posibilă scădere a prețului în zilele următoare.'
             });
@@ -1005,6 +1121,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Bullish Engulfing (Înghițire Verde)',
                 type: 'bullish',
+                icon: 'engulf-bull',
                 tag: 'DOMINAȚIE CUMPĂRĂTORI',
                 desc: 'Cumpărătorii au fost atât de puternici încât au acoperit complet scăderea din ziua precedentă. Este un semnal clar de încredere și un avânt puternic de creștere.'
             });
@@ -1017,6 +1134,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Bearish Engulfing (Înghițire Roșie)',
                 type: 'bearish',
+                icon: 'engulf-bear',
                 tag: 'DOMINAȚIE VÂNZĂTORI',
                 desc: 'Vânzările de azi au fost masive și au anulat complet câștigul din ziua anterioară. Arată că vânzătorii au preluat controlul și prețul se poate corecta în continuare.'
             });
@@ -1029,6 +1147,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Bullish Marubozu (Control Total)',
                 type: 'bullish',
+                icon: 'marubozu-bull',
                 tag: 'FORȚĂ MAXIMĂ DE CREȘTERE',
                 desc: 'Prețul a crescut constant de la prima până la ultima minută a zilei, fără ezitări. Demonstrează că investitorii cumpără cu mare încredere la orice preț.'
             });
@@ -1041,6 +1160,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Bearish Marubozu (Presiune Vânzare)',
                 type: 'bearish',
+                icon: 'marubozu-bear',
                 tag: 'SCĂDERE CONTINUĂ',
                 desc: 'Acțiunea a scăzut continuu pe tot parcursul zilei. Indică o grabă a investitorilor de a ieși din acțiune, prețul având șanse mari să continue scăderea.'
             });
@@ -1053,6 +1173,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Piercing Line (Linia de Străpungere)',
                 type: 'bullish',
+                icon: 'pierce-bull',
                 tag: 'REVENIRE CUMPĂRĂTORI',
                 desc: 'Prima zi a fost puternic negativă, iar a doua a deschis chiar mai jos, dar a urcat și a acoperit peste jumătate din pierderea anterioară. Cumpărătorii revin în forță și pot opri scăderea.'
             });
@@ -1065,6 +1186,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Dark Cloud Cover (Nor Întunecat)',
                 type: 'bearish',
+                icon: 'pierce-bear',
                 tag: 'REVENIRE VÂNZĂTORI',
                 desc: 'Prima zi a fost puternic pozitivă, iar a doua a deschis chiar mai sus, dar a coborât și a șters peste jumătate din câștigul anterior. Vânzătorii revin în forță și pot opri creșterea.'
             });
@@ -1077,6 +1199,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Tweezer Bottom (Pensetă de Minim)',
                 type: 'bullish',
+                icon: 'tweezer-bull',
                 tag: 'MINIM DUBLU CONFIRMAT',
                 desc: 'Prețul a atins aproape exact același nivel minim două zile la rând și nu a mai putut coborî sub el. Vânzătorii au pierdut din putere, iar acest minim dublu poate marca o revenire.'
             });
@@ -1089,6 +1212,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Tweezer Top (Pensetă de Maxim)',
                 type: 'bearish',
+                icon: 'tweezer-bear',
                 tag: 'MAXIM DUBLU CONFIRMAT',
                 desc: 'Prețul a atins aproape exact același nivel maxim două zile la rând și nu a mai putut urca peste el. Cumpărătorii au pierdut din putere, iar acest maxim dublu poate marca o scădere.'
             });
@@ -1105,6 +1229,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Three White Soldiers (Trei Soldați Albi)',
                 type: 'bullish',
+                icon: 'soldiers-bull',
                 tag: 'CONTINUARE CREȘTERE',
                 desc: 'Trei zile la rând cu creșteri solide, fiecare închizând mai sus decât precedenta, fără ezitări mari. Arată o presiune de cumpărare constantă și susținută, nu doar un puseu izolat.'
             });
@@ -1121,6 +1246,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Three Black Crows (Trei Ciori Negre)',
                 type: 'bearish',
+                icon: 'crows-bear',
                 tag: 'CONTINUARE SCĂDERE',
                 desc: 'Trei zile la rând cu scăderi solide, fiecare închizând mai jos decât precedenta, fără ezitări mari. Arată o presiune de vânzare constantă și susținută, nu doar un puseu izolat.'
             });
@@ -1133,6 +1259,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Spinning Top (Titirez)',
                 type: 'neutral',
+                icon: 'spinning-top',
                 tag: 'EZITARE ÎN PIAȚĂ',
                 desc: 'Nici cumpărătorii, nici vânzătorii nu au reușit să controleze ziua. Piața este nesigură pe direcție și se pregătește de o schimbare de tendință.'
             });
@@ -1145,6 +1272,7 @@ function detectCandlePatterns(dataSlice) {
                 time: c3.timestamp,
                 name: 'Doji (Cruce de Indecizie)',
                 type: 'neutral',
+                icon: 'doji',
                 tag: 'INDECIZIE A PIEȚEI',
                 desc: 'Prețul a deschis și a închis aproape la fel — cumpărătorii și vânzătorii sunt la egalitate perfectă și niciuna dintre tabere nu a câștigat ziua. Nu arată singur o direcție; urmărește următoarele lumânări ca să vezi încotro se rupe echilibrul.'
             });
@@ -1247,16 +1375,16 @@ function renderChart() {
             aiContainer.innerHTML = '';
             detectedPatterns.forEach(p => {
                 const dateStr = new Date(p.time).toLocaleDateString("ro-RO", {day: 'numeric', month: 'short'});
-                const icon = p.type === 'bullish' ? '📈' : (p.type === 'bearish' ? '📉' : '⚖️');
+                const iconSvg = patternIconSvg(PATTERN_ICONS[p.icon] || PATTERN_ICONS.doji);
                 const colorClass = p.type === 'bullish' ? '#10b981' : (p.type === 'bearish' ? '#ef4444' : '#8b5cf6');
                 const bgTag = p.type === 'bullish' ? 'rgba(16, 185, 129, 0.12)' : (p.type === 'bearish' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(139, 92, 246, 0.12)');
                 const borderTag = p.type === 'bullish' ? 'rgba(16, 185, 129, 0.3)' : (p.type === 'bearish' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(139, 92, 246, 0.3)');
-                
+
                 aiContainer.innerHTML += `
                     <div style="padding: 1rem 1.1rem; border-radius: 14px; background: rgba(255,255,255,0.02); box-shadow: var(--neu-in); display: flex; flex-direction: column; gap: 0.5rem; border: 1px solid rgba(255,255,255,0.03);">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
-                            <strong style="font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
-                                <span>${icon}</span> ${p.name}
+                            <strong style="font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                                <span class="pattern-icon-badge" style="background: ${bgTag}; border: 1px solid ${borderTag};">${iconSvg}</span> ${p.name}
                             </strong>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; background: ${bgTag}; color: ${colorClass}; border: 1px solid ${borderTag}; font-weight: 700; letter-spacing: 0.3px;">

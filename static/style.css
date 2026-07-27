@@ -22,6 +22,9 @@
     --info: #2563eb;
 
     --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+    /* Reserved for primary/hero surfaces (KPIs, chart, verdict) so they read
+       as the top layer; secondary/nested containers keep --shadow-card. */
+    --shadow-card-lg: 0 2px 4px rgba(15, 23, 42, 0.04), 0 10px 24px rgba(15, 23, 42, 0.07);
 
     --nav-bg: #ffffff;
     --nav-width: 260px;
@@ -402,7 +405,7 @@ a { text-decoration: none; color: inherit; }
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 1.25rem 1.25rem;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-card-lg);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -500,13 +503,55 @@ a { text-decoration: none; color: inherit; }
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 1.5rem;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-card-lg);
     min-width: 0;
 }
 
 .buy-panel { border-top: 3px solid var(--success); }
 .sell-panel { border-top: 3px solid var(--danger); }
 .dividend-calendar-panel { border-top: 3px solid var(--info); }
+
+/* ─── Dashboard: Top Movers ──────────────────────────────────────────────────── */
+.movers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+.gainers-panel { border-top: 3px solid var(--success); }
+.losers-panel { border-top: 3px solid var(--danger); }
+
+.movers-list { display: flex; flex-direction: column; gap: 0.15rem; }
+
+.mover-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.4rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.mover-row:hover { background: var(--bg-hover); }
+.mover-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+
+.mover-identity { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.mover-symbol { font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
+.mover-name {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+.mover-figures { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; flex-shrink: 0; }
+.mover-price { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
+.mover-change { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; }
+.mover-change.val-up { color: var(--success); }
+.mover-change.val-down { color: var(--danger); }
 
 .panel-header {
     display: flex;
@@ -573,6 +618,16 @@ a { text-decoration: none; color: inherit; }
     font-size: 0.85rem;
     color: var(--text-muted);
     line-height: 1.5;
+}
+
+.pattern-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    flex-shrink: 0;
 }
 
 /* ─── Signal Badges ──────────────────────────────────────────────────────────── */
@@ -1024,6 +1079,10 @@ a { text-decoration: none; color: inherit; }
         grid-template-columns: 1fr;
     }
 
+    .movers-grid {
+        grid-template-columns: 1fr;
+    }
+
     .alerts-grid {
         grid-template-columns: 1fr;
     }
@@ -1118,7 +1177,7 @@ a { text-decoration: none; color: inherit; }
    ═══════════════════════════════════════════════════════════════════════════════ */
 .chart-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.25rem; align-items: start; }
 .chart-sidebar { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-.active-ticker-details { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; box-shadow: var(--shadow-card); }
+.active-ticker-details { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; box-shadow: var(--shadow-card-lg); }
 .ticker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; }
 .active-symbol { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.4px; }
 .active-variation { font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; }
@@ -1133,7 +1192,7 @@ a { text-decoration: none; color: inherit; }
 .stat-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
 .stat-value { font-family: var(--font-mono); font-size: 0.92rem; font-weight: 700; color: var(--text-main); }
 #stat-sector { font-family: 'Inter', system-ui, sans-serif; }
-.signals-summary { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; box-shadow: var(--shadow-card); }
+.signals-summary { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; box-shadow: var(--shadow-card-lg); }
 .signal-gauge { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.75rem; }
 .gauge-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
 .gauge-value {
@@ -1152,7 +1211,7 @@ a { text-decoration: none; color: inherit; }
 .gauge-value.BUY  { color: var(--success); background: rgba(22, 163, 74, 0.1);  border-color: rgba(22, 163, 74, 0.4); }
 .gauge-value.SELL { color: var(--danger);  background: rgba(220, 38, 38, 0.1);  border-color: rgba(220, 38, 38, 0.4); }
 .gauge-value.HOLD { color: var(--warning); background: rgba(217, 119, 6, 0.1);  border-color: rgba(217, 119, 6, 0.4); }
-.chart-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; box-shadow: var(--shadow-card); min-width: 0; }
+.chart-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; box-shadow: var(--shadow-card-lg); min-width: 0; }
 .chart-type-selectors, .chart-indicator-overlays { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
 .btn-chart-opt { padding: 0.35rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: transparent; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
 .btn-chart-opt:hover, .btn-chart-opt.active { background: var(--primary); color: #fff; border-color: var(--primary); }

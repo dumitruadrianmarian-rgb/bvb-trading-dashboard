@@ -38,7 +38,7 @@
       }
     </script>
     <!-- CSS Style Link -->
-    <link rel="stylesheet" href="style.css?v=8.6">
+    <link rel="stylesheet" href="style.css?v=8.7">
 </head>
 <body>
     <div class="app-layout">
@@ -144,6 +144,27 @@
                         </div>
                         <div class="index-value" id="market-sentiment-value">50.0%</div>
                         <div class="index-footer" id="market-sentiment-desc">Index Fear & Greed BVB</div>
+                    </div>
+                </section>
+
+                <section class="movers-grid">
+                    <div class="rec-panel movers-panel gainers-panel">
+                        <div class="panel-header">
+                            <i class="ph-duotone ph-trend-up"></i>
+                            <h3>Top Creșteri</h3>
+                        </div>
+                        <div class="movers-list" id="top-gainers-list">
+                            <div class="loading-placeholder">Se analizează piața...</div>
+                        </div>
+                    </div>
+                    <div class="rec-panel movers-panel losers-panel">
+                        <div class="panel-header">
+                            <i class="ph-duotone ph-trend-down"></i>
+                            <h3>Top Scăderi</h3>
+                        </div>
+                        <div class="movers-list" id="top-losers-list">
+                            <div class="loading-placeholder">Se analizează piața...</div>
+                        </div>
                     </div>
                 </section>
             </div>
@@ -719,6 +740,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- JS Logic Script -->
-    <script src="script.js?v=8.6"></script>
+    <script src="script.js?v=8.7"></script>
 </body>
 </html>
