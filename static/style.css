@@ -161,6 +161,11 @@ a { text-decoration: none; color: inherit; }
     transition: transform 0.15s;
 }
 
+/* Desktop sidebar has room for the full label; the bottom nav bar on
+   mobile/PWA swaps in the short one (see the ≤850px breakpoint) so long
+   labels don't wrap and throw icons out of vertical alignment there. */
+.nav-label-short { display: none; }
+
 .nav-link:hover {
     color: var(--text-main);
     background: var(--bg-hover);
@@ -1041,7 +1046,17 @@ a { text-decoration: none; color: inherit; }
         background: var(--bg-hover);
     }
 
-    .nav-link span { display: block; overflow-wrap: break-word; word-break: break-word; line-height: 1.1; }
+    /* Short label instead of the full one, and never wrap - a wrapped label
+       makes that one button taller than its neighbors and throws the whole
+       row's icons out of vertical alignment. */
+    .nav-label-full { display: none; }
+    .nav-label-short {
+        display: block;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
     .nav-link svg { width: 25px; height: 25px; }
 
