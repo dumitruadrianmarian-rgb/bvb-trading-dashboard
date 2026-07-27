@@ -116,6 +116,7 @@ a { text-decoration: none; color: inherit; }
     width: 34px;
     height: 34px;
     border-radius: 8px;
+    border: 1px solid var(--border);
     object-fit: cover;
     flex-shrink: 0;
 }
