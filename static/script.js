@@ -490,9 +490,9 @@ function populateWatchlist() {
             <td class="table-price">${priceFormatted} RON</td>
             <td class="${varClass}">${varText}</td>
             <td class="${ytdClass}">${ytdText}</td>
-            <td>${stock.pe > 0 ? stock.pe.toFixed(2) : '-'}</td>
-            <td>${stock.pb > 0 ? stock.pb.toFixed(2) : '-'}</td>
-            <td>${stock.div_yield > 0 ? stock.div_yield.toFixed(2) + '%' : '0.00%'}</td>
+            <td class="table-num">${stock.pe > 0 ? stock.pe.toFixed(2) : '-'}</td>
+            <td class="table-num">${stock.pb > 0 ? stock.pb.toFixed(2) : '-'}</td>
+            <td class="table-num">${stock.div_yield > 0 ? stock.div_yield.toFixed(2) + '%' : '0.00%'}</td>
             <td class="${rsiClass}">${rsi.toFixed(1)}</td>
             <td>
                 <span class="badge-signal ${stock.technical.tech_signal}">${signalText}</span>

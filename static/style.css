@@ -26,6 +26,10 @@
     --nav-bg: #ffffff;
     --nav-width: 260px;
 
+    /* Tabular figures (prices, %, ratios) get a monospace face so digits
+       align and read like ticker-tape data instead of prose. */
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+
     /* ── Legacy variable aliases (used in inline styles in HTML) ── */
     --color-blue:   #2563eb;
     --color-green:  #16a34a;
@@ -420,6 +424,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 .index-change {
+    font-family: var(--font-mono);
     font-size: 0.78rem;
     font-weight: 600;
     padding: 0.2rem 0.55rem;
@@ -430,6 +435,7 @@ a { text-decoration: none; color: inherit; }
 .index-change.neutral  { color: var(--info); background: rgba(37, 99, 235, 0.08); }
 
 .index-value {
+    font-family: var(--font-mono);
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.4px;
@@ -540,7 +546,14 @@ a { text-decoration: none; color: inherit; }
 }
 
 .rec-card-symbol {
+    font-family: var(--font-mono);
     font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.rec-card-price {
+    font-family: var(--font-mono);
     font-weight: 700;
     color: var(--text-main);
 }
@@ -659,7 +672,7 @@ a { text-decoration: none; color: inherit; }
     gap: 0.15rem;
     white-space: normal;
 }
-.table-symbol { font-weight: 700; color: var(--text-main); }
+.table-symbol { font-family: var(--font-mono); font-weight: 700; color: var(--text-main); }
 .table-name {
     font-size: 0.76rem;
     color: var(--text-muted);
@@ -669,10 +682,10 @@ a { text-decoration: none; color: inherit; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.table-price { font-weight: 600; }
-.val-up { color: var(--success); font-weight: 600; }
-.val-down { color: var(--danger); font-weight: 600; }
-.val-neutral { color: var(--text-muted); font-weight: 600; }
+.table-price, .table-num { font-family: var(--font-mono); font-weight: 600; }
+.val-up { font-family: var(--font-mono); color: var(--success); font-weight: 600; }
+.val-down { font-family: var(--font-mono); color: var(--danger); font-weight: 600; }
+.val-neutral { font-family: var(--font-mono); color: var(--text-muted); font-weight: 600; }
 
 .badge-signal {
     display: inline-block;
@@ -1107,22 +1120,38 @@ a { text-decoration: none; color: inherit; }
 .chart-sidebar { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 .active-ticker-details { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; box-shadow: var(--shadow-card); }
 .ticker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; }
-.active-symbol { font-size: 1.4rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.4px; }
-.active-variation { font-weight: 700; font-size: 0.9rem; }
+.active-symbol { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.4px; }
+.active-variation { font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; }
 .active-variation.positive { color: var(--success); }
 .active-variation.negative { color: var(--danger); }
 .active-name { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; margin-bottom: 0.5rem; }
 .active-price-row { display: flex; align-items: baseline; gap: 0.35rem; }
-.active-price { font-size: 1.8rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
+.active-price { font-family: var(--font-mono); font-size: 1.8rem; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
 .currency { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
 .ticker-stats-grid { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; box-shadow: var(--shadow-card); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 .stat-box { display: flex; flex-direction: column; gap: 0.2rem; }
 .stat-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
-.stat-value { font-size: 0.92rem; font-weight: 700; color: var(--text-main); }
+.stat-value { font-family: var(--font-mono); font-size: 0.92rem; font-weight: 700; color: var(--text-main); }
+#stat-sector { font-family: 'Inter', system-ui, sans-serif; }
 .signals-summary { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; box-shadow: var(--shadow-card); }
 .signal-gauge { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.75rem; }
 .gauge-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-.gauge-value { font-size: 1.2rem; font-weight: 800; color: var(--text-main); padding: 0.4rem 0.85rem; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-hover); text-align: center; }
+.gauge-value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text-main);
+    padding: 0.55rem 0.85rem;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-hover);
+    text-align: center;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+/* Verdict-weighted color: this is the single call-to-action on the page,
+   so it should read at a glance instead of blending into a neutral box. */
+.gauge-value.BUY  { color: var(--success); background: rgba(22, 163, 74, 0.1);  border-color: rgba(22, 163, 74, 0.4); }
+.gauge-value.SELL { color: var(--danger);  background: rgba(220, 38, 38, 0.1);  border-color: rgba(220, 38, 38, 0.4); }
+.gauge-value.HOLD { color: var(--warning); background: rgba(217, 119, 6, 0.1);  border-color: rgba(217, 119, 6, 0.4); }
 .chart-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; box-shadow: var(--shadow-card); min-width: 0; }
 .chart-type-selectors, .chart-indicator-overlays { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
 .btn-chart-opt { padding: 0.35rem 0.75rem; border: 1px solid var(--border); border-radius: 6px; background: transparent; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
