@@ -755,6 +755,14 @@ a { text-decoration: none; color: inherit; }
 .val-up { font-family: var(--font-mono); color: var(--success); font-weight: 600; }
 .val-down { font-family: var(--font-mono); color: var(--danger); font-weight: 600; }
 .val-neutral { font-family: var(--font-mono); color: var(--text-muted); font-weight: 600; }
+.val-pl-neutral { font-family: var(--font-mono); color: var(--warning); font-weight: 600; }
+/* .market-table/.portfolio-table/.alerts-table td already sets color, which outranks the
+   bare .val-* classes above (class+element beats class alone) — re-assert it here at
+   matching specificity so profit/loss coloring actually renders inside these tables. */
+.market-table td.val-up, .portfolio-table td.val-up, .alerts-table td.val-up { color: var(--success); }
+.market-table td.val-down, .portfolio-table td.val-down, .alerts-table td.val-down { color: var(--danger); }
+.market-table td.val-neutral, .portfolio-table td.val-neutral, .alerts-table td.val-neutral { color: var(--text-muted); }
+.market-table td.val-pl-neutral, .portfolio-table td.val-pl-neutral, .alerts-table td.val-pl-neutral { color: var(--warning); }
 
 .badge-signal {
     display: inline-block;

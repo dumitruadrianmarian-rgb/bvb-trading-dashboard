@@ -2401,7 +2401,7 @@ function renderPortfolio() {
     enrichedItems.forEach(item => {
         const tr = document.createElement("tr");
         
-        const plClass = item.pl > 0 ? "val-up" : (item.pl < 0 ? "val-down" : "val-neutral");
+        const plClass = item.pl > 0 ? "val-up" : (item.pl < 0 ? "val-down" : "val-pl-neutral");
         const rowSignalClass = item.pl > 0 ? "row-signal-BUY" : (item.pl < 0 ? "row-signal-SELL" : "row-signal-HOLD");
         tr.className = rowSignalClass;
         
