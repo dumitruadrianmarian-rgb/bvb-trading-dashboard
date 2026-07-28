@@ -2026,19 +2026,20 @@ function updateMarketStatus() {
     const badge = document.getElementById("market-status-badge");
     const text = document.getElementById("market-status-text");
     if (!badge || !text) return;
-    
+
+    const dot = badge.querySelector(".status-indicator");
     const now = new Date();
     const day = now.getDay(); // 0 is Sunday, 6 is Saturday
     const hour = now.getHours();
-    
+
     const isWeekday = day >= 1 && day <= 5;
     const isTradingHours = hour >= 10 && hour < 16;
-    
+
     if (isWeekday && isTradingHours) {
-        badge.className = "market-status open";
+        if (dot) dot.className = "status-indicator online";
         text.innerText = "Bursă: Deschisă";
     } else {
-        badge.className = "market-status closed";
+        if (dot) dot.className = "status-indicator closed";
         text.innerText = "Bursă: Închisă";
     }
 }
