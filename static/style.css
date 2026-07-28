@@ -734,6 +734,14 @@ a { text-decoration: none; color: inherit; }
     white-space: normal;
 }
 .table-symbol { font-family: var(--font-mono); font-weight: 700; color: var(--text-main); }
+.table-symbol-clickable {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: color 0.15s;
+}
+.table-symbol-clickable:hover { color: var(--primary); text-decoration: underline; }
 .table-name {
     font-size: 0.76rem;
     color: var(--text-muted);

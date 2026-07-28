@@ -3247,9 +3247,12 @@ function renderManageAlertsTable() {
             : '<span class="status-indicator" style="background: rgba(239, 68, 68, 0.18); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700; padding: 4px 10px; border-radius: 8px; display: inline-block;">SELL (Peste)</span>';
         const alertId = alert.id || alert.timestamp;
         
+        const symCell = sym !== "N/A"
+            ? `<span class="table-symbol-clickable" onclick="selectTicker('${sym}'); switchTab('analysis');">${sym}</span>`
+            : `<span class="table-symbol">${sym}</span>`;
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td style="font-weight: bold; color: var(--text-primary);">${sym}</td>
+            <td>${symCell}</td>
             <td>${typeBadge}</td>
             <td style="font-weight: bold;">${target} RON</td>
             <td>
@@ -3351,9 +3354,12 @@ function renderAlertHistoryTable() {
                     ? '<span style="color: var(--color-green); font-weight: 600;"><i class="ph-duotone ph-check-circle" style="margin-right: 4px;"></i>Trimis (200 OK)</span>'
                     : `<span style="color: var(--color-red); font-weight: 600;"><i class="ph-duotone ph-warning" style="margin-right: 4px;"></i>${item.status}</span>`;
                 
+                const symCell = sym !== "N/A"
+                    ? `<span class="table-symbol-clickable" onclick="selectTicker('${sym}'); switchTab('analysis');">${sym}</span>`
+                    : `<span class="table-symbol">${sym}</span>`;
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td style="font-weight: bold; color: var(--text-primary);">${sym}</td>
+                    <td>${symCell}</td>
                     <td>${typeBadge}</td>
                     <td style="font-weight: 600;">${target}</td>
                     <td style="font-weight: 700; color: var(--color-blue);">${price}</td>
