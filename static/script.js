@@ -2444,8 +2444,8 @@ function renderPortfolio() {
                 </div>
             </td>
             <td class="${plClass}">
-                <div style="font-weight: 600; font-size: 13px;">${formattedPL}</div>
-                <div style="font-size: 11px; margin-top: 2px; font-weight: 600;">${formattedPLPct}</div>
+                <div style="font-family: var(--font-mono); font-weight: 600; font-size: 13px;">${formattedPL}</div>
+                <div style="font-family: var(--font-mono); font-size: 11px; margin-top: 2px; font-weight: 600;">${formattedPLPct}</div>
             </td>
             <td>
                 <div style="font-family: var(--font-mono); font-size: 13px; font-weight: 500;">${sharePercent.toFixed(1)}%</div>
