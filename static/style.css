@@ -767,6 +767,9 @@ a { text-decoration: none; color: inherit; }
 .badge-signal.BUY { color: var(--success); background: rgba(22, 163, 74, 0.1); }
 .badge-signal.SELL { color: var(--danger); background: rgba(220, 38, 38, 0.1); }
 .badge-signal.HOLD { color: var(--warning); background: rgba(217, 119, 6, 0.1); }
+.badge-signal.positive { color: var(--success); background: rgba(22, 163, 74, 0.1); }
+.badge-signal.negative { color: var(--danger); background: rgba(220, 38, 38, 0.1); }
+.badge-signal.neutral { color: var(--warning); background: rgba(217, 119, 6, 0.1); }
 
 .table-actions-wrapper { display: flex; gap: 0.4rem; }
 .btn-table-action {
@@ -784,6 +787,7 @@ a { text-decoration: none; color: inherit; }
 }
 .btn-table-action:hover { background: var(--bg-hover); color: var(--text-main); }
 .btn-table-action.remove-ticker-btn:hover { color: var(--danger); border-color: var(--danger); }
+.btn-table-action.btn-delete-holding:hover { color: var(--danger); border-color: var(--danger); background: rgba(220, 38, 38, 0.08); }
 
 /* ─── Chart Section ──────────────────────────────────────────────────────────── */
 .chart-section {

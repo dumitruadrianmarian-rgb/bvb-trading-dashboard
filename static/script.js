@@ -463,9 +463,8 @@ function populateWatchlist() {
         
         // Variation format & color class
         const varText = stock.variation;
-        const isUp = varText.includes("+") || (!varText.includes("-") && parseFloat(varText) > 0);
-        const isDown = varText.includes("-");
-        const varClass = isUp ? "val-up" : (isDown ? "val-down" : "val-neutral");
+        const varNum = parseFloat(varText.replace(",", "."));
+        const varClass = varNum > 0 ? "val-up" : (varNum < 0 ? "val-down" : "val-neutral");
         
         // YTD Return
         const ytd = stock.technical.ytd_return;
@@ -545,7 +544,7 @@ function updateTopWidgets() {
         const topTradedChange = document.getElementById("top-traded-change");
         topTradedChange.innerText = topTraded.variation;
         
-        const isUp = topTraded.variation.includes("+") || parseFloat(topTraded.variation) > 0;
+        const isUp = parseFloat(topTraded.variation.replace(",", ".")) > 0;
         topTradedChange.className = isUp ? "index-change positive" : "index-change negative";
     }
     
@@ -626,9 +625,9 @@ function renderTopMovers() {
     const gainers = ranked.filter(r => r.varVal > 0).sort((a, b) => b.varVal - a.varVal).slice(0, 5);
     const losers = ranked.filter(r => r.varVal < 0).sort((a, b) => a.varVal - b.varVal).slice(0, 5);
 
-    const renderRows = (list) => list.map(({ stock }) => {
+    const renderRows = (list) => list.map(({ stock, varVal }) => {
         const priceFormatted = stock.price.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-        const isUp = stock.variation.includes("+") || (!stock.variation.includes("-") && parseFloat(stock.variation) > 0);
+        const isUp = varVal > 0;
         return `
             <div class="mover-row" onclick="selectTicker('${stock.symbol}'); switchTab('analysis');">
                 <div class="mover-identity">
@@ -825,7 +824,7 @@ function updateActiveTickerDetails(symbol) {
     // Variation
     const chartVar = document.getElementById("chart-variation");
     chartVar.innerText = stock.variation;
-    const isUp = stock.variation.includes("+") || parseFloat(stock.variation) > 0;
+    const isUp = parseFloat(stock.variation.replace(",", ".")) > 0;
     chartVar.className = isUp ? "active-variation positive" : "active-variation negative";
     
     // Ratios
@@ -2453,7 +2452,7 @@ function renderPortfolio() {
                 <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${formattedQty} unit.</div>
             </td>
             <td>
-                <button class="btn-table-action" onclick="removePortfolioTransaction('${item.symbol}')" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: var(--color-red);" title="Elimină deținerea">
+                <button class="btn-table-action btn-delete-holding" onclick="removePortfolioTransaction('${item.symbol}')" title="Elimină deținerea">
                     <i class="ph-duotone ph-trash"  style="font-size: 13px; width: 13px; height: 13px;"></i>
                 </button>
             </td>
