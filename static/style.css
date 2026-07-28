@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
    BVB Trading Dashboard — design identic cu RPI Admin Dashboard
-   Font: Inter | Minimalist Light | Nu dark mode | Nu gradients
+   Font: Inter | Minimalist Light/Dark (toggle) | Nu gradients
    ═══════════════════════════════════════════════════════ */
 
 :root {
@@ -42,6 +42,41 @@
     --card-bg:      #ffffff;
     --neu-out:      none;
     --neu-in:       none;
+}
+
+/* Dark theme override, toggled via data-theme="dark" on <html> (see
+   toggleTheme() in script.js). --primary stays a saturated blue here
+   instead of near-black, since several buttons hardcode "color: #fff"
+   against it - a near-black primary would make that text unreadable. */
+:root[data-theme="dark"] {
+    --bg-app: #0d1016;
+    --bg-card: #161a22;
+    --bg-hover: #20252f;
+
+    --text-main: #e5e7eb;
+    --text-muted: #9199a8;
+    --text-placeholder: #6b7280;
+
+    --border: #262b36;
+    --border-strong: #363c49;
+
+    --primary: #3b82f6;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-card-lg: 0 4px 12px rgba(0, 0, 0, 0.4), 0 12px 28px rgba(0, 0, 0, 0.35);
+
+    --nav-bg: #12151c;
+
+    --color-blue:   #3b82f6;
+    --color-green:  #22c55e;
+    --color-red:    #ef4444;
+    --color-yellow: #f59e0b;
+    --text-primary: #e5e7eb;
+    --card-bg:      #161a22;
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────────────────── */

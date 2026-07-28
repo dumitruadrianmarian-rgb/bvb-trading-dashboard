@@ -181,8 +181,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Reliance on native browser PWA prompt (Chrome/Edge/Android/iOS native install)
     // initPWAInstallPrompt("RoInvest Hub BVB", "icon-192.png?v=2.0");
 
-    // Apply light/dark theme dynamically based on Sunrise/Sunset
-    applyThemeBasedOnSun();
+    // Wire up the manual light/dark theme toggle
+    initThemeToggle();
 
     // Setup active state highlight on scroll & click
     setupScrollHighlight();
@@ -1441,6 +1441,8 @@ function renderChart() {
         });
     });
     
+    const chartTheme = getChartTheme();
+
     const options = {
         annotations: {
             yaxis: annotationsY,
@@ -1480,7 +1482,7 @@ function renderChart() {
             type: 'datetime',
             labels: {
                 style: {
-                    colors: '#6b7280',
+                    colors: chartTheme.mutedColor,
                     fontFamily: 'Plus Jakarta Sans'
                 }
             },
@@ -1497,15 +1499,13 @@ function renderChart() {
                     return value.toLocaleString("ro-RO", { minimumFractionDigits: 2 }) + " RON";
                 },
                 style: {
-                    colors: '#6b7280',
+                    colors: chartTheme.mutedColor,
                     fontFamily: 'Plus Jakarta Sans'
                 }
             }
         },
         grid: {
-            // App UI is always light-themed (no dark mode in style.css), so chart
-            // chrome must stay in light colors regardless of the day/night clock toggle.
-            borderColor: 'rgba(15, 23, 42, 0.06)',
+            borderColor: chartTheme.gridColor,
             strokeDashArray: 4,
             xaxis: {
                 lines: {
@@ -1514,9 +1514,10 @@ function renderChart() {
             }
         },
         theme: {
-            mode: 'light'
+            mode: chartTheme.mode
         },
         tooltip: {
+            theme: chartTheme.mode,
             shared: true,
             intersect: false,
             x: {
@@ -1534,7 +1535,7 @@ function renderChart() {
             position: 'top',
             horizontalAlign: 'right',
             labels: {
-                colors: '#0f172a'
+                colors: chartTheme.textColor
             }
         }
     };
@@ -1548,68 +1549,59 @@ function renderChart() {
 }
 
 // Sunrise/Sunset Theme Toggling
-function applyThemeBasedOnSun() {
-    const lat = 44.4323; // Bucharest Coordinates
-    const lng = 26.1063;
-    
-    console.log("Fetching sunrise and sunset times...");
-    fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "OK") {
-                const sunrise = new Date(data.results.sunrise);
-                const sunset = new Date(data.results.sunset);
-                const now = new Date();
-                
-                if (now >= sunrise && now <= sunset) {
-                    setTheme("light");
-                } else {
-                    setTheme("dark");
-                }
-            } else {
-                applyFallbackTheme();
-            }
-        })
-        .catch(err => {
-            console.warn("Could not fetch sunrise/sunset API, using local time fallback:", err);
-            applyFallbackTheme();
-        });
-}
-
-function applyFallbackTheme() {
-    const now = new Date();
-    const hour = now.getHours();
-    
-    // Fallback: light theme between 7:00 AM and 8:30 PM (20:30) local time
-    if (hour >= 7 && (hour < 20 || (hour === 20 && now.getMinutes() < 30))) {
-        setTheme("light");
-    } else {
-        setTheme("dark");
-    }
-}
-
+// Manual light/dark toggle (persisted in localStorage, applied via [data-theme] on <html>).
+// getChartTheme() below is what makes ApexCharts (which doesn't read CSS variables) follow it.
 function setTheme(theme) {
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    
-    if (theme === "light") {
-        document.documentElement.classList.add("theme-light");
-        document.documentElement.classList.remove("theme-dark");
-        if (metaThemeColor) metaThemeColor.setAttribute("content", "#f1f5f9");
-        console.log("Applied dynamic Day Theme (Light Mode)");
+    const toggleBtn = document.getElementById("theme-toggle-btn");
+    const icon = toggleBtn ? toggleBtn.querySelector("i") : null;
+
+    if (theme === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark");
+        if (metaThemeColor) metaThemeColor.setAttribute("content", "#0d1016");
+        if (icon) icon.className = "ph-duotone ph-sun";
     } else {
-        document.documentElement.classList.add("theme-dark");
-        document.documentElement.classList.remove("theme-light");
-        if (metaThemeColor) metaThemeColor.setAttribute("content", "#1e293b");
-        console.log("Applied dynamic Night Theme (Dark Mode)");
+        document.documentElement.removeAttribute("data-theme");
+        if (metaThemeColor) metaThemeColor.setAttribute("content", "#f8fafc");
+        if (icon) icon.className = "ph-duotone ph-moon";
     }
-    
-    // Re-render chart to update background and label colors if it's active
+    localStorage.setItem("bvb_theme", theme);
+
+    // Re-render ApexCharts instances so their chrome (axis/legend/grid colors,
+    // which ApexCharts doesn't pick up from CSS variables) follows the new theme.
     if (chartData.length > 0) {
         renderChart();
     }
     if (typeof portfolio !== 'undefined' && portfolio.length > 0) {
         renderPortfolio();
     }
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    setTheme(isDark ? "light" : "dark");
+}
+
+function initThemeToggle() {
+    const toggleBtn = document.getElementById("theme-toggle-btn");
+    const icon = toggleBtn ? toggleBtn.querySelector("i") : null;
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    if (icon) icon.className = isDark ? "ph-duotone ph-sun" : "ph-duotone ph-moon";
+    if (toggleBtn) toggleBtn.addEventListener("click", toggleTheme);
+}
+
+// ApexCharts renders its own chrome (axis labels, legend, grid, tooltip) with
+// literal colors rather than CSS variables, so callers must fetch these explicitly.
+function getChartTheme() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    return {
+        isDark,
+        mode: isDark ? "dark" : "light",
+        textColor: isDark ? "#e5e7eb" : "#0f172a",
+        mutedColor: isDark ? "#9199a8" : "#64748b",
+        gridColor: isDark ? "rgba(229, 231, 235, 0.08)" : "rgba(15, 23, 42, 0.06)",
+        strokeColor: isDark ? "#161a22" : "#ffffff"
+    };
 }
 
 function switchTab(tabId) {
@@ -2552,7 +2544,15 @@ function renderPortfolio() {
         plPctLabel.textContent = `${totalPlPrefix}${totalPLPercent.toFixed(2)}%`;
         plPctLabel.className = `index-change ${totalPlClass}`;
     }
-    
+
+    // stocks.length check matters: renderPortfolio() runs once from loadPortfolio()
+    // before stocks (live prices) have been fetched, when every item.currentPrice
+    // falls back to avgPrice - that would snapshot a degenerate totalValue==totalCost
+    // point and the 5min throttle would lock it in for the rest of the session.
+    if (enrichedItems.length > 0 && stocks.length > 0) {
+        snapshotPortfolioHistory(totalValue, totalCost);
+    }
+
     // Update Allocation Donut Chart grouped by industry sector
     const sectorMap = {};
     enrichedItems.forEach(item => {
@@ -2750,11 +2750,10 @@ function updatePortfolioChart(labels, series) {
     
     document.getElementById("portfolio-chart-card").style.display = "block";
     
-    // App UI is always light-themed (no dark mode in style.css), so chart
-    // chrome must stay in light colors regardless of the day/night clock toggle.
-    const textColor = "#0f172a";
-    const mutedColor = "#64748b";
-    const strokeColor = "#ffffff";
+    const chartTheme = getChartTheme();
+    const textColor = chartTheme.textColor;
+    const mutedColor = chartTheme.mutedColor;
+    const strokeColor = chartTheme.strokeColor;
     
     const options = {
         series: series,
@@ -2859,7 +2858,7 @@ function updatePortfolioChart(labels, series) {
             }
         },
         tooltip: {
-            theme: 'light',
+            theme: chartTheme.mode,
             y: {
                 formatter: function (val) {
                     return val.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
@@ -2888,6 +2887,118 @@ function updatePortfolioChart(labels, series) {
                 </div>
             `;
         }).join("");
+    }
+}
+
+// Portfolio value history (equity curve) — the server has no notion of live
+// prices, so the client (which already computes totalValue for the KPI
+// cards) POSTs one {date, value, cost} snapshot per day; the backend upserts
+// by date so repeat visits just refresh today's point instead of piling up.
+let portfolioHistoryChart = null;
+let lastPortfolioSnapshotAt = 0;
+
+function snapshotPortfolioHistory(value, cost) {
+    const now = Date.now();
+    if (now - lastPortfolioSnapshotAt < 5 * 60 * 1000) return; // throttle to once per 5min
+    lastPortfolioSnapshotAt = now;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    fetch('/api/portfolio/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: todayStr, value, cost })
+    })
+        .then(() => fetchAndRenderPortfolioHistory())
+        .catch(err => console.warn("Could not save portfolio history snapshot:", err));
+}
+
+function fetchAndRenderPortfolioHistory() {
+    fetch('/api/portfolio/history')
+        .then(res => res.json())
+        .then(history => renderPortfolioHistoryChart(history || []))
+        .catch(err => console.warn("Could not load portfolio history:", err));
+}
+
+function renderPortfolioHistoryChart(history) {
+    const chartDiv = document.getElementById("portfolio-history-chart");
+    const emptyDiv = document.getElementById("portfolio-history-empty");
+    const panel = document.getElementById("portfolio-history-panel");
+    if (!chartDiv || !panel) return;
+
+    if (portfolio.length === 0) {
+        panel.style.display = "none";
+        return;
+    }
+    panel.style.display = "block";
+
+    if (!history || history.length < 2) {
+        chartDiv.style.display = "none";
+        if (emptyDiv) emptyDiv.style.display = "block";
+        return;
+    }
+    chartDiv.style.display = "block";
+    if (emptyDiv) emptyDiv.style.display = "none";
+
+    const chartTheme = getChartTheme();
+    const dates = history.map(h => h.date);
+    const values = history.map(h => h.value);
+    const isUp = values[values.length - 1] >= values[0];
+    const formatDate = (isoDate) => new Date(isoDate + 'T00:00:00').toLocaleDateString('ro-RO', { day: 'numeric', month: 'short' });
+
+    const options = {
+        chart: {
+            height: 260,
+            type: 'area',
+            toolbar: { show: false },
+            animations: { enabled: true, easing: 'easeinout', speed: 400 },
+            background: 'transparent'
+        },
+        colors: [isUp ? '#16a34a' : '#dc2626'],
+        stroke: { width: 2, curve: 'smooth' },
+        fill: {
+            type: 'gradient',
+            gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 90, 100] }
+        },
+        series: [{ name: 'Valoare Portofoliu', data: values }],
+        xaxis: {
+            // A category axis (not 'datetime') places exactly one tick per data
+            // point - with only a handful of daily snapshots, ApexCharts' datetime
+            // auto-ticking instead interpolates "nice" positions across the range
+            // that don't line up with the real per-day points.
+            type: 'category',
+            categories: dates,
+            labels: {
+                formatter: formatDate,
+                style: { colors: chartTheme.mutedColor, fontFamily: 'Plus Jakarta Sans' }
+            },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            labels: {
+                formatter: (value) => value.toLocaleString("ro-RO", { maximumFractionDigits: 0 }) + " RON",
+                style: { colors: chartTheme.mutedColor, fontFamily: 'Plus Jakarta Sans' }
+            }
+        },
+        grid: {
+            borderColor: chartTheme.gridColor,
+            strokeDashArray: 4,
+            xaxis: { lines: { show: true } }
+        },
+        theme: { mode: chartTheme.mode },
+        tooltip: {
+            theme: chartTheme.mode,
+            x: { formatter: formatDate },
+            y: { formatter: (value) => value.toLocaleString("ro-RO", { minimumFractionDigits: 2 }) + " RON" }
+        },
+        dataLabels: { enabled: false }
+    };
+
+    if (portfolioHistoryChart) {
+        portfolioHistoryChart.updateOptions(options);
+    } else {
+        portfolioHistoryChart = new ApexCharts(chartDiv, options);
+        portfolioHistoryChart.render();
     }
 }
 

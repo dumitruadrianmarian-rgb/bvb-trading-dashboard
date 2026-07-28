@@ -806,6 +806,65 @@ def save_realized():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+PORTFOLIO_HISTORY_FILE = 'data/portfolio_history.json'
+
+@app.route('/api/portfolio/history', methods=['GET'])
+def get_portfolio_history():
+    import json
+    import os
+    if not os.path.exists(PORTFOLIO_HISTORY_FILE):
+        return jsonify([])
+    try:
+        with open(PORTFOLIO_HISTORY_FILE, 'r') as f:
+            return jsonify(json.load(f))
+    except Exception:
+        return jsonify([])
+
+@app.route('/api/portfolio/history', methods=['POST'])
+def save_portfolio_history_snapshot():
+    # The client (not the server) computes portfolio value, since valuation
+    # needs live prices that only exist in the frontend's already-rendered
+    # "stocks" + "portfolio" state - so it POSTs one {date, value, cost}
+    # snapshot per day here instead of the server recomputing it independently.
+    from flask import request
+    import json
+    import os
+    try:
+        data = request.json
+        date_str = data.get("date")
+        value = float(data.get("value", 0))
+        cost = float(data.get("cost", 0))
+        if not date_str:
+            return jsonify({"success": False, "error": "Lipsește data."}), 400
+
+        history = []
+        if os.path.exists(PORTFOLIO_HISTORY_FILE):
+            try:
+                with open(PORTFOLIO_HISTORY_FILE, 'r') as f:
+                    history = json.load(f)
+            except Exception:
+                history = []
+
+        # Upsert: overwrite today's entry if a snapshot for this date already
+        # exists, so multiple visits in one day just refresh today's point
+        # instead of piling up duplicates.
+        existing = next((h for h in history if h.get("date") == date_str), None)
+        if existing:
+            existing["value"] = value
+            existing["cost"] = cost
+        else:
+            history.append({"date": date_str, "value": value, "cost": cost})
+
+        history.sort(key=lambda h: h["date"])
+        history = history[-730:]  # cap at ~2 years of daily points
+
+        os.makedirs(os.path.dirname(PORTFOLIO_HISTORY_FILE), exist_ok=True)
+        with open(PORTFOLIO_HISTORY_FILE, 'w') as f:
+            json.dump(history, f, indent=4)
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route('/api/stocks', methods=['GET'])
 def get_stocks():
     return jsonify({

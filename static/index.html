@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>RoInvest Hub - BVB Trading Dashboard</title>
-    
+
+    <!-- Apply saved theme before first paint, so there's no flash of the wrong theme -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('bvb_theme');
+        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      })();
+    </script>
+
     <!-- Modern Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,7 +46,7 @@
       }
     </script>
     <!-- CSS Style Link -->
-    <link rel="stylesheet" href="style.css?v=9.6">
+    <link rel="stylesheet" href="style.css?v=9.7">
 </head>
 <body>
     <div class="app-layout">
@@ -110,6 +118,9 @@
                     <div class="status-indicator clock-pill" style="font-size: 0.75rem;">
                         <span id="live-time-clock">--:--:--</span><span class="clock-sep"> | <span id="last-update-time">Se încarcă...</span></span>
                     </div>
+                    <button class="header-btn" id="theme-toggle-btn" title="Comută tema light/dark" aria-label="Comută tema light/dark">
+                        <i class="ph-duotone ph-moon"></i>
+                    </button>
                     <button class="header-btn" id="refresh-data-btn">
                         <i class="ph-duotone ph-arrows-clockwise"></i>
                     </button>
@@ -271,6 +282,18 @@
                         <div class="index-footer">Randamentul total al investiției</div>
                     </div>
                 </section>
+
+                <!-- Portfolio value over time (equity curve) -->
+                <div class="rec-panel" id="portfolio-history-panel" style="display:none; margin-bottom: 25px;">
+                    <div class="panel-header">
+                        <i class="ph-duotone ph-chart-line-up"></i>
+                        <h3>Evoluție Portofoliu</h3>
+                    </div>
+                    <div id="portfolio-history-chart"></div>
+                    <div id="portfolio-history-empty" style="display:none; text-align:center; color: var(--text-muted); padding: 2rem 1rem; font-size: 0.88rem;">
+                        Se acumulează date despre valoarea portofoliului tău. Revino peste câteva zile ca să vezi evoluția în timp.
+                    </div>
+                </div>
 
                 <!-- Main portfolio layout -->
                 <div class="portfolio-layout">
@@ -746,6 +769,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- JS Logic Script -->
-    <script src="script.js?v=9.4"></script>
+    <script src="script.js?v=9.11"></script>
 </body>
 </html>
