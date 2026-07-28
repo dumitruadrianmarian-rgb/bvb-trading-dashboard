@@ -2426,16 +2426,16 @@ function renderPortfolio() {
  
         tr.innerHTML = `
             <td>
-                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary);">${item.symbol}</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Valoare: ${formattedVal}</div>
+                <div style="font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: var(--text-primary);">${item.symbol}</div>
+                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px;">Valoare: ${formattedVal}</div>
             </td>
             <td>
-                <div style="font-size: 13px; font-weight: 500;">${formattedCurPrice}</div>
+                <div style="font-family: var(--font-mono); font-size: 13px; font-weight: 500;">${formattedCurPrice}</div>
                 <div class="${varClass}" style="font-size: 11px; font-weight: 600; margin-top: 2px;">${varPrefix}${variation}</div>
             </td>
             <td>
-                <div style="font-size: 13px;">${formattedAvgPrice}</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Cost: ${formattedCost}</div>
+                <div style="font-family: var(--font-mono); font-size: 13px;">${formattedAvgPrice}</div>
+                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px;">Cost: ${formattedCost}</div>
             </td>
             <td>
                 <div style="display: flex; align-items: center; gap: 4px;">
@@ -2448,8 +2448,8 @@ function renderPortfolio() {
                 <div style="font-size: 11px; margin-top: 2px; font-weight: 600;">${formattedPLPct}</div>
             </td>
             <td>
-                <div style="font-size: 13px; font-weight: 500;">${sharePercent.toFixed(1)}%</div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${formattedQty} unit.</div>
+                <div style="font-family: var(--font-mono); font-size: 13px; font-weight: 500;">${sharePercent.toFixed(1)}%</div>
+                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px;">${formattedQty} unit.</div>
             </td>
             <td>
                 <button class="btn-table-action btn-delete-holding" onclick="removePortfolioTransaction('${item.symbol}')" title="Elimină deținerea">
@@ -2501,10 +2501,10 @@ function renderPortfolio() {
                 const formattedNet = net.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
 
                 tr.innerHTML = `
-                    <td style="font-weight: 700; color: var(--text-primary);">${item.symbol}</td>
-                    <td style="text-align: right; color: var(--color-green);">${formattedGain}</td>
-                    <td style="text-align: right; color: var(--color-red);">${formattedLoss}</td>
-                    <td style="text-align: right; color: #f59e0b;">${formattedTax}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${item.symbol}</td>
+                    <td style="font-family: var(--font-mono); text-align: right; color: var(--color-green);">${formattedGain}</td>
+                    <td style="font-family: var(--font-mono); text-align: right; color: var(--color-red);">${formattedLoss}</td>
+                    <td style="font-family: var(--font-mono); text-align: right; color: #f59e0b;">${formattedTax}</td>
                     <td style="text-align: right; font-weight: 600;" class="${netClass}">${formattedNet}</td>
                     <td style="text-align: right; white-space: nowrap;">
                         <button class="btn-table-action" onclick="editRealizedEntry(${idx})" style="margin-right:4px;" title="Editează">
@@ -3253,7 +3253,7 @@ function renderManageAlertsTable() {
         tr.innerHTML = `
             <td>${symCell}</td>
             <td>${typeBadge}</td>
-            <td style="font-weight: bold;">${target} RON</td>
+            <td style="font-family: var(--font-mono); font-weight: bold;">${target} RON</td>
             <td>
                 <button class="btn-action btn-delete" onclick="deleteManageAlert('${alertId}')" title="Șterge Alertă" style="background: none; border: none; color: var(--color-red); cursor: pointer; padding: 5px;">
                     <i class="ph-duotone ph-trash" style="font-size: 18px;"></i>
@@ -3360,8 +3360,8 @@ function renderAlertHistoryTable() {
                 tr.innerHTML = `
                     <td>${symCell}</td>
                     <td>${typeBadge}</td>
-                    <td style="font-weight: 600;">${target}</td>
-                    <td style="font-weight: 700; color: var(--color-blue);">${price}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 600;">${target}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--color-blue);">${price}</td>
                     <td style="font-size: 12px; color: var(--text-muted);">${timeStr}</td>
                     <td>${statusBadge}</td>
                 `;
