@@ -2976,13 +2976,13 @@ function populateDividendCalendar() {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>
-                <div style="font-weight: 700; color: var(--text-primary);">${r.symbol}</div>
+                <div style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${r.symbol}</div>
                 <div style="font-size: 11px; color: var(--text-muted);">${r.name}</div>
             </td>
-            <td style="font-weight: 600;">${r.divValue.toFixed(4)} RON</td>
-            <td style="color: var(--color-emerald); font-weight: 700;">${r.yieldVal.toFixed(2)}%</td>
-            <td style="font-size: 12px; font-weight: 500;">${r.ex}</td>
-            <td style="font-size: 12px; font-weight: 500; color: var(--text-muted);">${r.pay}</td>
+            <td style="font-family: var(--font-mono); font-weight: 600;">${r.divValue.toFixed(4)} RON</td>
+            <td style="font-family: var(--font-mono); color: var(--color-emerald); font-weight: 700;">${r.yieldVal.toFixed(2)}%</td>
+            <td style="font-family: var(--font-mono); font-size: 12px; font-weight: 500;">${r.ex}</td>
+            <td style="font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--text-muted);">${r.pay}</td>
             <td>
                 <span class="badge-signal ${r.statusClass}" style="padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;">${r.statusText}</span>
             </td>
