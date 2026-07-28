@@ -1342,9 +1342,10 @@ function renderChart() {
         });
     }
     
-    // Colors for series
-    const colors = ['#3b82f6', '#10b981', '#f59e0b'];
-    
+    // Colors for series (candlestick itself, MA50, MA200)
+    const chartTheme = getChartTheme();
+    const colors = [chartTheme.accent, chartTheme.up, chartTheme.accent2];
+
     // Annotations (Buy Price and Active Alerts)
     const annotationsY = [];
     const portItem = portfolio.find(p => p.symbol === activeSymbol);
@@ -1354,10 +1355,10 @@ function renderChart() {
             x: p.time,
             seriesIndex: 0,
             label: {
-                borderColor: p.type === 'bullish' ? '#10b981' : (p.type === 'bearish' ? '#ef4444' : '#8b5cf6'),
+                borderColor: p.type === 'bullish' ? chartTheme.up : (p.type === 'bearish' ? chartTheme.down : '#8b5cf6'),
                 style: {
                     color: '#fff',
-                    background: p.type === 'bullish' ? '#10b981' : (p.type === 'bearish' ? '#ef4444' : '#8b5cf6'),
+                    background: p.type === 'bullish' ? chartTheme.up : (p.type === 'bearish' ? chartTheme.down : '#8b5cf6'),
                     fontSize: '11px',
                 },
                 text: p.name,
@@ -1375,7 +1376,7 @@ function renderChart() {
             detectedPatterns.forEach(p => {
                 const dateStr = new Date(p.time).toLocaleDateString("ro-RO", {day: 'numeric', month: 'short'});
                 const iconSvg = patternIconSvg(PATTERN_ICONS[p.icon] || PATTERN_ICONS.doji);
-                const colorClass = p.type === 'bullish' ? '#10b981' : (p.type === 'bearish' ? '#ef4444' : '#8b5cf6');
+                const colorClass = p.type === 'bullish' ? chartTheme.up : (p.type === 'bearish' ? chartTheme.down : '#8b5cf6');
                 const bgTag = p.type === 'bullish' ? 'rgba(16, 185, 129, 0.12)' : (p.type === 'bearish' ? 'rgba(239, 68, 68, 0.12)' : 'rgba(139, 92, 246, 0.12)');
                 const borderTag = p.type === 'bullish' ? 'rgba(16, 185, 129, 0.3)' : (p.type === 'bearish' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(139, 92, 246, 0.3)');
 
@@ -1404,14 +1405,14 @@ function renderChart() {
     if (portItem) {
         annotationsY.push({
             y: portItem.avgPrice,
-            borderColor: '#10b981',
+            borderColor: chartTheme.up,
             strokeDashArray: 5,
             borderWidth: 2,
             label: {
-                borderColor: '#10b981',
+                borderColor: chartTheme.up,
                 style: {
                     color: '#fff',
-                    background: '#10b981',
+                    background: chartTheme.up,
                     fontSize: '11px',
                     fontWeight: 600
                 },
@@ -1419,20 +1420,20 @@ function renderChart() {
             }
         });
     }
-    
+
     let alertsList = window.serverAlerts || [];
     const activeAlertsList = alertsList.filter(a => a.symbol === activeSymbol);
     activeAlertsList.forEach(alert => {
         annotationsY.push({
             y: alert.target,
-            borderColor: '#f59e0b',
+            borderColor: chartTheme.accent2,
             strokeDashArray: 4,
             borderWidth: 1.5,
             label: {
-                borderColor: '#f59e0b',
+                borderColor: chartTheme.accent2,
                 style: {
                     color: '#000',
-                    background: '#f59e0b',
+                    background: chartTheme.accent2,
                     fontSize: '10px',
                     fontWeight: 600
                 },
@@ -1440,8 +1441,6 @@ function renderChart() {
             }
         });
     });
-    
-    const chartTheme = getChartTheme();
 
     const options = {
         annotations: {
@@ -1453,6 +1452,13 @@ function renderChart() {
             type: 'line',
             toolbar: {
                 show: false
+            },
+            // Read-only chart - the range buttons above it (1L/3L/1A/...) already
+            // cover "view a different period", so drag/pinch zoom just gets in the
+            // way (any touch-scroll over the chart on mobile was being read as a
+            // zoom gesture, with no way back short of re-picking a range).
+            zoom: {
+                enabled: false
             },
             animations: {
                 enabled: true,
@@ -1472,8 +1478,8 @@ function renderChart() {
         plotOptions: {
             candlestick: {
                 colors: {
-                    upward: '#10b981',
-                    downward: '#ef4444'
+                    upward: chartTheme.up,
+                    downward: chartTheme.down
                 }
             }
         },
@@ -1483,7 +1489,7 @@ function renderChart() {
             labels: {
                 style: {
                     colors: chartTheme.mutedColor,
-                    fontFamily: 'Plus Jakarta Sans'
+                    fontFamily: chartTheme.fontFamily
                 }
             },
             axisBorder: {
@@ -1500,7 +1506,7 @@ function renderChart() {
                 },
                 style: {
                     colors: chartTheme.mutedColor,
-                    fontFamily: 'Plus Jakarta Sans'
+                    fontFamily: chartTheme.fontFamily
                 }
             }
         },
@@ -1534,6 +1540,7 @@ function renderChart() {
             show: true,
             position: 'top',
             horizontalAlign: 'right',
+            fontFamily: chartTheme.fontFamily,
             labels: {
                 colors: chartTheme.textColor
             }
@@ -1590,17 +1597,34 @@ function initThemeToggle() {
     if (toggleBtn) toggleBtn.addEventListener("click", toggleTheme);
 }
 
-// ApexCharts renders its own chrome (axis labels, legend, grid, tooltip) with
-// literal colors rather than CSS variables, so callers must fetch these explicitly.
+// ApexCharts renders its own chrome (axis labels, legend, grid, tooltip, series
+// colors) with literal values rather than CSS variables, so every chart in the
+// app must fetch its palette from here - this is the single source of truth
+// that keeps candlestick/donut/equity-curve colors identical to each other and
+// to the --success/--danger/--info/--warning tokens used in style.css, instead
+// of each chart carrying its own slightly-different hardcoded hex codes.
 function getChartTheme() {
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
     return {
         isDark,
         mode: isDark ? "dark" : "light",
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
         textColor: isDark ? "#e5e7eb" : "#0f172a",
         mutedColor: isDark ? "#9199a8" : "#64748b",
         gridColor: isDark ? "rgba(229, 231, 235, 0.08)" : "rgba(15, 23, 42, 0.06)",
-        strokeColor: isDark ? "#161a22" : "#ffffff"
+        strokeColor: isDark ? "#161a22" : "#ffffff",
+        // Mirrors --success/--danger/--info/--warning exactly per theme.
+        up: isDark ? "#22c55e" : "#16a34a",
+        down: isDark ? "#ef4444" : "#dc2626",
+        accent: isDark ? "#3b82f6" : "#2563eb",
+        accent2: isDark ? "#f59e0b" : "#d97706",
+        // Categorical palette (sector donut): opens with the same four semantic
+        // hues used everywhere else in the app, then extends into harmonized
+        // hues at matching saturation/lightness instead of a generic rainbow.
+        // Last slot is a neutral slate, reserved for "Alte Sectoare" catch-alls.
+        categorical: isDark
+            ? ["#3b82f6", "#22c55e", "#14b8a6", "#f59e0b", "#ef4444", "#a78bfa", "#22d3ee", "#f472b6", "#c084fc", "#7e8998"]
+            : ["#2563eb", "#16a34a", "#0d9488", "#d97706", "#dc2626", "#7c3aed", "#0891b2", "#db2777", "#9333ea", "#64748b"]
     };
 }
 
@@ -2775,18 +2799,7 @@ function updatePortfolioChart(labels, series) {
                 }
             }
         },
-        colors: [
-            '#6366f1', // Indigo (Financiar)
-            '#10b981', // Emerald (Energie)
-            '#14b8a6', // Teal (Utilitati)
-            '#f59e0b', // Amber (Real Estate)
-            '#ef4444', // Red (Horeca/Servicii)
-            '#8b5cf6', // Violet
-            '#06b6d4', // Cyan
-            '#ec4899', // Pink
-            '#f43f5e', // Rose
-            '#a855f7'  // Purple
-        ],
+        colors: chartTheme.categorical,
         stroke: {
             show: true,
             colors: [strokeColor],
@@ -2799,7 +2812,7 @@ function updatePortfolioChart(labels, series) {
             enabled: true,
             style: {
                 fontSize: '11px',
-                fontFamily: 'var(--font-body)',
+                fontFamily: chartTheme.fontFamily,
                 fontWeight: 'bold',
                 colors: ['#ffffff']
             },
@@ -2827,7 +2840,7 @@ function updatePortfolioChart(labels, series) {
                         name: {
                             show: true,
                             fontSize: '13px',
-                            fontFamily: 'var(--font-body)',
+                            fontFamily: chartTheme.fontFamily,
                             fontWeight: '600',
                             color: mutedColor,
                             offsetY: -6
@@ -2835,7 +2848,7 @@ function updatePortfolioChart(labels, series) {
                         value: {
                             show: true,
                             fontSize: '18px',
-                            fontFamily: 'var(--font-body)',
+                            fontFamily: chartTheme.fontFamily,
                             fontWeight: '700',
                             color: textColor,
                             offsetY: 6,
@@ -2848,6 +2861,7 @@ function updatePortfolioChart(labels, series) {
                             label: 'Portofoliu',
                             color: mutedColor,
                             fontWeight: '600',
+                            fontFamily: chartTheme.fontFamily,
                             formatter: function (w) {
                                 const sum = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
                                 return sum.toLocaleString("ro-RO", { maximumFractionDigits: 0 }) + " RON";
@@ -2950,10 +2964,11 @@ function renderPortfolioHistoryChart(history) {
             height: 260,
             type: 'area',
             toolbar: { show: false },
+            zoom: { enabled: false }, // read-only summary chart - no range to navigate into
             animations: { enabled: true, easing: 'easeinout', speed: 400 },
             background: 'transparent'
         },
-        colors: [isUp ? '#16a34a' : '#dc2626'],
+        colors: [isUp ? chartTheme.up : chartTheme.down],
         stroke: { width: 2, curve: 'smooth' },
         fill: {
             type: 'gradient',
@@ -2969,7 +2984,7 @@ function renderPortfolioHistoryChart(history) {
             categories: dates,
             labels: {
                 formatter: formatDate,
-                style: { colors: chartTheme.mutedColor, fontFamily: 'Plus Jakarta Sans' }
+                style: { colors: chartTheme.mutedColor, fontFamily: chartTheme.fontFamily }
             },
             axisBorder: { show: false },
             axisTicks: { show: false }
@@ -2977,7 +2992,7 @@ function renderPortfolioHistoryChart(history) {
         yaxis: {
             labels: {
                 formatter: (value) => value.toLocaleString("ro-RO", { maximumFractionDigits: 0 }) + " RON",
-                style: { colors: chartTheme.mutedColor, fontFamily: 'Plus Jakarta Sans' }
+                style: { colors: chartTheme.mutedColor, fontFamily: chartTheme.fontFamily }
             }
         },
         grid: {
