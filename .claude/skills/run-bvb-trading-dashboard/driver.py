@@ -15,11 +15,12 @@ the exact venv path). Feed it a script over stdin, one command per line:
   screenshot <name>                  # saves screenshots/<name>.png
   console                            # prints captured console errors so far
   eval <js-expression>               # runs JS in the page, prints the return value (or error)
+  assert <js-expression>             # like eval, but a falsy result or a thrown error fails the run
   sleep <ms>
 
 Blank lines and lines starting with # are ignored. Exits non-zero if any
-console error was captured by the end of the script (check the printed
-[console-errors] block).
+console error was captured, or any `assert` failed/errored, by the end of
+the script (check the printed [console-errors] block).
 
 Example:
   driver_python -m ...  (see SKILL.md for the exact interpreter invocation)
@@ -89,6 +90,18 @@ def main():
                     print("  ->", result)
                 except Exception as e:
                     print("  !! eval error:", e)
+            elif cmd == "assert":
+                try:
+                    result = page.evaluate(arg)
+                except Exception as e:
+                    print("  !! assert error:", e)
+                    console_errors.append(f"assert error: {e}")
+                else:
+                    if result:
+                        print("  ->", result)
+                    else:
+                        print(f"  !! assert failed: {arg} -> {result}")
+                        console_errors.append(f"assert failed: {arg} -> {result}")
             else:
                 print(f"  unknown command: {cmd}", file=sys.stderr)
 

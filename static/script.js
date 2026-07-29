@@ -2388,7 +2388,7 @@ function buildBrokerAdviceCards(enrichedItems, sectorMap, totalValue, stocks) {
             severity: Infinity,
             sharePercent: 0,
             html: `
-                <div style="color: var(--text-muted); line-height: 1.4; font-size: 12px; border-left: 3px solid var(--color-blue); padding-left: 10px; margin-top: 10px;">
+                <div style="color: var(--text-muted); line-height: 1.4; font-size: 12px; border-left: 3px solid var(--color-blue); padding-left: 10px; margin-top: 6px;">
                     ${recommendation}
                 </div>
             `
@@ -2399,19 +2399,19 @@ function buildBrokerAdviceCards(enrichedItems, sectorMap, totalValue, stocks) {
     enrichedItems.forEach(item => {
         const stock = stocks.find(s => s.symbol === item.symbol);
         const rsi = stock && stock.technical ? stock.technical.rsi : null;
-        if (rsi === null || rsi === undefined || (rsi >= 30 && rsi <= 70)) return;
+        if (rsi === null || rsi === undefined || !Number.isFinite(rsi) || (rsi >= 30 && rsi <= 70)) return;
 
         const sharePercent = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
         let text = "";
 
         if (rsi > 70) {
             if (item.pl > 0) {
-                text = `<strong>${item.symbol}</strong> (${sharePercent.toFixed(1)}% din portofoliu) are RSI la <strong>${rsi.toFixed(1)}</strong>, în zona tehnică de supracumpărare, iar poziția ta e pe profit. Ia în calcul securizarea parțială a câștigului, pentru a reduce riscul unei corecții tehnice.`;
+                text = `<strong style="font-family: var(--font-mono);">${item.symbol}</strong> (<strong style="font-family: var(--font-mono);">${sharePercent.toFixed(1)}%</strong> din portofoliu) are RSI la <strong style="font-family: var(--font-mono);">${rsi.toFixed(1)}</strong>, în zona tehnică de supracumpărare, iar poziția ta e pe profit. Ia în calcul securizarea parțială a câștigului, pentru a reduce riscul unei corecții tehnice.`;
             } else {
-                text = `<strong>${item.symbol}</strong> (${sharePercent.toFixed(1)}% din portofoliu) are RSI la <strong>${rsi.toFixed(1)}</strong>, în zona tehnică de supracumpărare. Semnalează risc de corecție pe termen scurt — poziția ta e deja pe pierdere, deci acest semnal singur nu e un motiv tehnic să vinzi.`;
+                text = `<strong style="font-family: var(--font-mono);">${item.symbol}</strong> (<strong style="font-family: var(--font-mono);">${sharePercent.toFixed(1)}%</strong> din portofoliu) are RSI la <strong style="font-family: var(--font-mono);">${rsi.toFixed(1)}</strong>, în zona tehnică de supracumpărare. Semnalează risc de corecție pe termen scurt — poziția ta e deja pe pierdere, deci acest semnal singur nu e un motiv tehnic să vinzi.`;
             }
         } else {
-            text = `<strong>${item.symbol}</strong> (${sharePercent.toFixed(1)}% din portofoliu) are RSI la <strong>${rsi.toFixed(1)}</strong>, în zona tehnică de supravânzare. Ai putea evalua o achiziție suplimentară pentru a media prețul de cost, dacă fundamentele companiei rămân neschimbate.`;
+            text = `<strong style="font-family: var(--font-mono);">${item.symbol}</strong> (<strong style="font-family: var(--font-mono);">${sharePercent.toFixed(1)}%</strong> din portofoliu) are RSI la <strong style="font-family: var(--font-mono);">${rsi.toFixed(1)}</strong>, în zona tehnică de supravânzare. Ai putea evalua o achiziție suplimentară pentru a media prețul de cost, dacă fundamentele companiei rămân neschimbate.`;
         }
 
         insights.push({

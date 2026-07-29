@@ -39,6 +39,7 @@
     --color-red:    #dc2626;
     --color-yellow: #d97706;
     --text-primary: #111827;
+    --text-success: #16a34a;
     --card-bg:      #ffffff;
     --neu-out:      none;
     --neu-in:       none;
@@ -76,6 +77,7 @@
     --color-red:    #ef4444;
     --color-yellow: #f59e0b;
     --text-primary: #e5e7eb;
+    --text-success: #22c55e;
     --card-bg:      #161a22;
 }
 
