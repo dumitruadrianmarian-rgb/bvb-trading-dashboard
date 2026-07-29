@@ -2357,6 +2357,83 @@ function initPortfolio() {
     }
 }
 
+// Pure function: takes portfolio/market data, returns up to 3 sorted HTML advice cards.
+// Sector-concentration risk always outranks per-holding technical signals (structural vs tactical).
+function buildBrokerAdviceCards(enrichedItems, sectorMap, totalValue, stocks) {
+    const insights = [];
+
+    // Sector concentration (unchanged logic/copy from the original single-message version).
+    let overexposedSector = null;
+    let maxPct = 0;
+
+    Object.entries(sectorMap).forEach(([sector, val]) => {
+        const pct = totalValue > 0 ? (val / totalValue) * 100 : 0;
+        if (pct > 50 && pct > maxPct) {
+            overexposedSector = sector;
+            maxPct = pct;
+        }
+    });
+
+    if (overexposedSector) {
+        let recommendation = "";
+        if (overexposedSector === "Financiar-Bancar") {
+            recommendation = `Deții o expunere foarte mare în sectorul <strong>Financiar-Bancar</strong> (${maxPct.toFixed(0)}%). Brokerul recomandă diversificarea portofoliului prin adăugarea de acțiuni din <strong>Energie & Utilități</strong> (ex. <strong>Hidroelectrica - H2O</strong> sau <strong>Romgaz - SNG</strong>) pentru o stabilitate mai mare a randamentelor.`;
+        } else if (overexposedSector.includes("Energie")) {
+            recommendation = `Portofoliul tău este concentrat masiv în sectorul <strong>Energie</strong> (${maxPct.toFixed(0)}%). Pentru a reduce expunerea pe factori macroeconomici de energie, analizează adăugarea unor acțiuni din sectorul <strong>Bancar</strong> (ex. <strong>Banca Transilvania - TLV</strong>) sau <strong>Imobiliar</strong> (ex. <strong>One United - ONE</strong>).`;
+        } else {
+            recommendation = `Expunerea pe sectorul <strong>${overexposedSector}</strong> depășește 50% din portofoliu (${maxPct.toFixed(0)}%). Pentru o siguranță sporită a capitalului pe termen lung, brokerul îți recomandă să diversifici în alte 1-2 sectoare economice distincte de la BVB.`;
+        }
+
+        insights.push({
+            severity: Infinity,
+            sharePercent: 0,
+            html: `
+                <div style="color: var(--text-muted); line-height: 1.4; font-size: 12px; border-left: 3px solid var(--color-blue); padding-left: 10px; margin-top: 10px;">
+                    ${recommendation}
+                </div>
+            `
+        });
+    }
+
+    // Per-holding RSI-extreme technical signals (educational, not financial advice).
+    enrichedItems.forEach(item => {
+        const stock = stocks.find(s => s.symbol === item.symbol);
+        const rsi = stock && stock.technical ? stock.technical.rsi : null;
+        if (rsi === null || rsi === undefined || (rsi >= 30 && rsi <= 70)) return;
+
+        const sharePercent = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+        let text = "";
+
+        if (rsi > 70) {
+            if (item.pl > 0) {
+                text = `<strong>${item.symbol}</strong> (${sharePercent.toFixed(1)}% din portofoliu) are RSI la <strong>${rsi.toFixed(1)}</strong>, în zona tehnică de supracumpărare, iar poziția ta e pe profit. Ia în calcul securizarea parțială a câștigului, pentru a reduce riscul unei corecții tehnice.`;
+            } else {
+                text = `<strong>${item.symbol}</strong> (${sharePercent.toFixed(1)}% din portofoliu) are RSI la <strong>${rsi.toFixed(1)}</strong>, în zona tehnică de supracumpărare. Semnalează risc de corecție pe termen scurt — poziția ta e deja pe pierdere, deci acest semnal singur nu e un motiv tehnic să vinzi.`;
+            }
+        } else {
+            text = `<strong>${item.symbol}</strong> (${sharePercent.toFixed(1)}% din portofoliu) are RSI la <strong>${rsi.toFixed(1)}</strong>, în zona tehnică de supravânzare. Ai putea evalua o achiziție suplimentară pentru a media prețul de cost, dacă fundamentele companiei rămân neschimbate.`;
+        }
+
+        insights.push({
+            severity: Math.abs(rsi - 50),
+            sharePercent,
+            html: `
+                <div style="color: var(--text-muted); line-height: 1.4; font-size: 12px; border-left: 3px solid var(--color-yellow); padding-left: 10px; margin-top: 10px;">
+                    ${text}
+                    <div style="font-size: 10px; color: var(--text-placeholder); margin-top: 4px; font-style: italic;">Educativ — nu constituie sfat financiar personalizat.</div>
+                </div>
+            `
+        });
+    });
+
+    insights.sort((a, b) => {
+        if (b.severity !== a.severity) return b.severity - a.severity;
+        return b.sharePercent - a.sharePercent;
+    });
+
+    return insights.slice(0, 3).map(i => i.html);
+}
+
 // Render Portfolio Table and Summary Cards
 function renderPortfolio() {
     const tbody = document.getElementById("portfolio-table-body");
