@@ -307,14 +307,14 @@
                                 <i class="ph-duotone ph-plus-circle" ></i>
                                 <h3>Adaugă Tranzacție</h3>
                             </div>
-                            <form id="portfolio-add-form" class="portfolio-form">
+                            <form id="portfolio-add-form" class="portfolio-form" novalidate>
                                 <!-- Symbol -->
                                 <div class="port-field">
                                     <label class="port-label">Simbol Activ</label>
                                     <div class="port-symbol-wrap">
                                         <div class="search-box port-search-box">
                                             <i  class="ph-duotone ph-magnifying-glass search-icon" style="font-size: 14px; width:14px;height:14px;"></i>
-                                            <input type="text" id="port-add-symbol" placeholder="Caută (ex: TLV)..." autocomplete="off" class="port-search-input" required>
+                                            <input type="text" id="port-add-symbol" placeholder="Caută (ex: TLV)..." autocomplete="off" class="port-search-input" pattern="[A-Za-z0-9.\-]{1,15}" maxlength="15" title="Litere, cifre, punct sau liniuță (ex: TLV, VWCE.DE)" required>
                                         </div>
                                         <div id="port-search-suggestions" class="search-suggestions port-suggestions"></div>
                                     </div>
@@ -769,6 +769,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- JS Logic Script -->
-    <script src="script.js?v=9.15"></script>
+    <script src="script.js?v=9.16"></script>
 </body>
 </html>

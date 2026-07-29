@@ -2323,17 +2323,27 @@ function initPortfolio() {
         }
     });
 
+    // Letters, digits, dot, dash - covers BVB tickers (TLV, H2O) and off-exchange
+    // ones bought through a broker (VWCE.DE, IWDA.AS, BRK-B), while rejecting
+    // emoji/whitespace/special characters that aren't a real ticker.
+    const SYMBOL_PATTERN = /^[A-Z0-9.\-]{1,15}$/;
+
     if (form) {
         form.addEventListener("submit", e => {
             e.preventDefault();
             const symbol = symbolInput.value.trim().toUpperCase();
             const qtyRaw = document.getElementById("port-add-qty").value;
             const priceRaw = priceInput.value;
-            
+
             const qty    = parseFloat(qtyRaw.toString().replace(',', '.'));
             const price  = parseFloat(priceRaw.toString().replace(',', '.'));
 
-            if (!symbol || isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0) {
+            if (!symbol || !SYMBOL_PATTERN.test(symbol)) {
+                showToast("Simbol invalid. Folosește doar litere, cifre, punct sau liniuță (ex: TLV, VWCE.DE).", "error");
+                return;
+            }
+
+            if (isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0) {
                 showToast("Date tranzacție invalide.", "error");
                 return;
             }
