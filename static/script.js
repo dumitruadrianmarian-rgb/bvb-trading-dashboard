@@ -237,6 +237,11 @@ document.addEventListener("DOMContentLoaded", () => {
     startLiveClock();
 
     Promise.all([loadPortfolio(), loadRealizedTransactions()]).then(() => {
+        // loadPortfolio() already renders as soon as it resolves, which can
+        // happen before loadRealizedTransactions() finishes - render once
+        // more now that both are guaranteed to be loaded, so realized
+        // transactions that arrived after that first render actually appear.
+        renderPortfolio();
         fetchData();
     });
     
@@ -2454,12 +2459,92 @@ function buildBrokerAdviceCards(enrichedItems, sectorMap, totalValue, stocks) {
     return insights.slice(0, 3).map(i => i.html);
 }
 
+// Renders the "Tranzacții Închise (Profit/Pierdere Realizată)" table and its
+// footer totals from the module-level `realizedTransactions`. Independent of
+// current holdings (`portfolio`), so it must run even when the portfolio is
+// empty - closed trades are still real history. Returns totalRealizedNet,
+// which also feeds the portfolio-wide Total P&L card in both renderPortfolio()
+// branches below.
+function renderRealizedTransactionsTable() {
+    const realizedTbody = document.getElementById("realized-table-body");
+    let totalRealizedGain = 0;
+    let totalRealizedLoss = 0;
+    let totalRealizedTax = 0;
+    let totalRealizedNet = 0;
+
+    if (!realizedTbody) return 0;
+
+    realizedTbody.innerHTML = "";
+
+    if (realizedTransactions.length === 0) {
+        realizedTbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); font-style: italic; padding: 15px;">
+                    Nicio tranzacție realizată. Apasă „Adaugă" pentru a înregistra prima tranzacție.
+                </td>
+            </tr>
+        `;
+    } else {
+        realizedTransactions.forEach((item, idx) => {
+            const gain = parseFloat(item.gain || 0.0);
+            const loss = parseFloat(item.loss || 0.0);
+            const tax = parseFloat(item.tax || 0.0);
+            const net = parseFloat(item.net || 0.0);
+
+            totalRealizedGain += gain;
+            totalRealizedLoss += loss;
+            totalRealizedTax += tax;
+            totalRealizedNet += net;
+
+            const tr = document.createElement("tr");
+            const netClass = net > 0 ? "val-up" : (net < 0 ? "val-down" : "val-neutral");
+            const rowSignalClass = net > 0 ? "row-signal-BUY" : (net < 0 ? "row-signal-SELL" : "row-signal-HOLD");
+            tr.className = rowSignalClass;
+
+            const formattedGain = gain.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+            const formattedLoss = loss.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+            const formattedTax = tax > 0 ? (tax.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON") : "-";
+            const formattedNet = net.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+
+            tr.innerHTML = `
+                <td style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${escapeHtml(item.symbol)}</td>
+                <td style="font-family: var(--font-mono); text-align: right; color: var(--color-green);">${formattedGain}</td>
+                <td style="font-family: var(--font-mono); text-align: right; color: var(--color-red);">${formattedLoss}</td>
+                <td style="font-family: var(--font-mono); text-align: right; color: #f59e0b;">${formattedTax}</td>
+                <td style="text-align: right; font-weight: 600;" class="${netClass}">${formattedNet}</td>
+                <td style="text-align: right; white-space: nowrap;">
+                    <button class="btn-table-action" onclick="editRealizedEntry(${idx})" style="margin-right:4px;" title="Editează">
+                        <i class="ph-duotone ph-pencil"  style="font-size: 12px; width:12px;height:12px;"></i>
+                    </button>
+                    <button class="btn-table-action" onclick="deleteRealizedEntry(${idx})" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--color-red);" title="Șterge">
+                        <i class="ph-duotone ph-trash"  style="font-size: 12px; width:12px;height:12px;"></i>
+                    </button>
+                </td>
+            `;
+            realizedTbody.appendChild(tr);
+        });
+    }
+
+    // Update footer totals
+    document.getElementById("realized-total-gain").textContent = totalRealizedGain.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+    document.getElementById("realized-total-loss").textContent = totalRealizedLoss.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+    document.getElementById("realized-total-tax").textContent = totalRealizedTax.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+
+    const netTotalEl = document.getElementById("realized-total-net");
+    if (netTotalEl) {
+        netTotalEl.textContent = totalRealizedNet.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+        netTotalEl.className = totalRealizedNet > 0 ? "val-up" : (totalRealizedNet < 0 ? "val-down" : "val-neutral");
+    }
+
+    return totalRealizedNet;
+}
+
 // Render Portfolio Table and Summary Cards
 function renderPortfolio() {
     const tbody = document.getElementById("portfolio-table-body");
-    
+
     if (!tbody) return;
-    
+
     if (portfolio.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -2470,14 +2555,31 @@ function renderPortfolio() {
         `;
         document.getElementById("port-total-value").textContent = "0.00 RON";
         document.getElementById("port-total-cost").textContent = "0.00 RON";
-        document.getElementById("port-total-pl").textContent = "0.00 RON";
+
+        // Closed trades are still real history - render them, and let the
+        // Total P&L card reflect realized net even with no current holdings,
+        // instead of being hardcoded to zero.
+        const totalRealizedNet = renderRealizedTransactionsTable();
+        const plLabel = document.getElementById("port-total-pl");
+        if (plLabel) {
+            const prefix = totalRealizedNet > 0 ? "+" : "";
+            plLabel.textContent = `${prefix}${totalRealizedNet.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RON`;
+        }
         const plPctLabel = document.getElementById("port-total-pl-pct");
         if (plPctLabel) {
+            // No cost basis with zero holdings, so a percentage return isn't
+            // meaningful here - only the class reflects gain/loss/flat.
             plPctLabel.textContent = "0.00%";
-            plPctLabel.className = "index-change neutral";
+            plPctLabel.className = `index-change ${totalRealizedNet > 0 ? "positive" : (totalRealizedNet < 0 ? "negative" : "neutral")}`;
         }
-        
+
         updatePortfolioChart([], []);
+
+        // No holdings to advise on - hide any advice left over from before
+        // the last holding was removed, instead of leaving it stale.
+        const adviceDiv = document.getElementById("portfolio-diversification-advice");
+        if (adviceDiv) adviceDiv.style.display = "none";
+
         return;
     }
     
@@ -2574,76 +2676,7 @@ function renderPortfolio() {
         tbody.appendChild(tr);
     });
     
-    // Render Realized Transactions Table
-    const realizedTbody = document.getElementById("realized-table-body");
-    let totalRealizedGain = 0;
-    let totalRealizedLoss = 0;
-    let totalRealizedTax = 0;
-    let totalRealizedNet = 0;
-
-    if (realizedTbody) {
-        realizedTbody.innerHTML = "";
-        
-        if (realizedTransactions.length === 0) {
-            realizedTbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; color: var(--text-muted); font-style: italic; padding: 15px;">
-                        Nicio tranzacție realizată. Apasă „Adaugă" pentru a înregistra prima tranzacție.
-                    </td>
-                </tr>
-            `;
-        } else {
-            realizedTransactions.forEach((item, idx) => {
-                const gain = parseFloat(item.gain || 0.0);
-                const loss = parseFloat(item.loss || 0.0);
-                const tax = parseFloat(item.tax || 0.0);
-                const net = parseFloat(item.net || 0.0);
-
-                totalRealizedGain += gain;
-                totalRealizedLoss += loss;
-                totalRealizedTax += tax;
-                totalRealizedNet += net;
-
-                const tr = document.createElement("tr");
-                const netClass = net > 0 ? "val-up" : (net < 0 ? "val-down" : "val-neutral");
-                const rowSignalClass = net > 0 ? "row-signal-BUY" : (net < 0 ? "row-signal-SELL" : "row-signal-HOLD");
-                tr.className = rowSignalClass;
-
-                const formattedGain = gain.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
-                const formattedLoss = loss.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
-                const formattedTax = tax > 0 ? (tax.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON") : "-";
-                const formattedNet = net.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
-
-                tr.innerHTML = `
-                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${escapeHtml(item.symbol)}</td>
-                    <td style="font-family: var(--font-mono); text-align: right; color: var(--color-green);">${formattedGain}</td>
-                    <td style="font-family: var(--font-mono); text-align: right; color: var(--color-red);">${formattedLoss}</td>
-                    <td style="font-family: var(--font-mono); text-align: right; color: #f59e0b;">${formattedTax}</td>
-                    <td style="text-align: right; font-weight: 600;" class="${netClass}">${formattedNet}</td>
-                    <td style="text-align: right; white-space: nowrap;">
-                        <button class="btn-table-action" onclick="editRealizedEntry(${idx})" style="margin-right:4px;" title="Editează">
-                            <i class="ph-duotone ph-pencil"  style="font-size: 12px; width:12px;height:12px;"></i>
-                        </button>
-                        <button class="btn-table-action" onclick="deleteRealizedEntry(${idx})" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--color-red);" title="Șterge">
-                            <i class="ph-duotone ph-trash"  style="font-size: 12px; width:12px;height:12px;"></i>
-                        </button>
-                    </td>
-                `;
-                realizedTbody.appendChild(tr);
-            });
-        }
-
-        // Update footer totals
-        document.getElementById("realized-total-gain").textContent = totalRealizedGain.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
-        document.getElementById("realized-total-loss").textContent = totalRealizedLoss.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
-        document.getElementById("realized-total-tax").textContent = totalRealizedTax.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
-        
-        const netTotalEl = document.getElementById("realized-total-net");
-        if (netTotalEl) {
-            netTotalEl.textContent = totalRealizedNet.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
-            netTotalEl.className = totalRealizedNet > 0 ? "val-up" : (totalRealizedNet < 0 ? "val-down" : "val-neutral");
-        }
-    }
+    const totalRealizedNet = renderRealizedTransactionsTable();
 
     // Update summary labels
     document.getElementById("port-total-value").textContent = totalValue.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
