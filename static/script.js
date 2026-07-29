@@ -2666,7 +2666,7 @@ function renderPortfolio() {
     const series = sortedSectors.map(entry => entry[1]);
     updatePortfolioChart(labels, series);
     
-    // Generate Broker Diversification Advice
+    // Generate Broker Advice (sector concentration + per-holding RSI-extreme signals)
     const adviceDiv = document.getElementById("portfolio-diversification-advice");
     if (adviceDiv) {
         if (enrichedItems.length === 0) {
@@ -2676,36 +2676,14 @@ function renderPortfolio() {
             let adviceHtml = `
                 <div style="font-weight: 700; font-size: 13px; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
                     <i class="ph-duotone ph-shield-warning"  style="font-size: 16px; width:16px;height:16px;color:var(--color-blue);"></i>
-                    Sfatul Brokerului (Diversificare)
+                    Sfatul Brokerului
                 </div>
             `;
-            
-            let overexposedSector = null;
-            let maxPct = 0;
-            
-            Object.entries(sectorMap).forEach(([sector, val]) => {
-                const pct = (val / totalValue) * 100;
-                if (pct > 50 && pct > maxPct) {
-                    overexposedSector = sector;
-                    maxPct = pct;
-                }
-            });
-            
-            if (overexposedSector) {
-                let recommendation = "";
-                if (overexposedSector === "Financiar-Bancar") {
-                    recommendation = `Deții o expunere foarte mare în sectorul <strong>Financiar-Bancar</strong> (${maxPct.toFixed(0)}%). Brokerul recomandă diversificarea portofoliului prin adăugarea de acțiuni din <strong>Energie & Utilități</strong> (ex. <strong>Hidroelectrica - H2O</strong> sau <strong>Romgaz - SNG</strong>) pentru o stabilitate mai mare a randamentelor.`;
-                } else if (overexposedSector.includes("Energie")) {
-                    recommendation = `Portofoliul tău este concentrat masiv în sectorul <strong>Energie</strong> (${maxPct.toFixed(0)}%). Pentru a reduce expunerea pe factori macroeconomici de energie, analizează adăugarea unor acțiuni din sectorul <strong>Bancar</strong> (ex. <strong>Banca Transilvania - TLV</strong>) sau <strong>Imobiliar</strong> (ex. <strong>One United - ONE</strong>).`;
-                } else {
-                    recommendation = `Expunerea pe sectorul <strong>${overexposedSector}</strong> depășește 50% din portofoliu (${maxPct.toFixed(0)}%). Pentru o siguranță sporită a capitalului pe termen lung, brokerul îți recomandă să diversifici în alte 1-2 sectoare economice distincte de la BVB.`;
-                }
-                
-                adviceHtml += `
-                    <div style="color: var(--text-muted); line-height: 1.4; font-size: 12px; border-left: 3px solid var(--color-blue); padding-left: 10px; margin-top: 6px;">
-                        ${recommendation}
-                    </div>
-                `;
+
+            const cards = buildBrokerAdviceCards(enrichedItems, sectorMap, totalValue, stocks);
+
+            if (cards.length > 0) {
+                adviceHtml += cards.join("");
             } else {
                 adviceHtml += `
                     <div style="color: var(--text-success); line-height: 1.4; font-size: 12px; border-left: 3px solid var(--color-emerald); padding-left: 10px; margin-top: 6px;">
@@ -2713,7 +2691,7 @@ function renderPortfolio() {
                     </div>
                 `;
             }
-            
+
             adviceDiv.innerHTML = adviceHtml;
         }
     }
