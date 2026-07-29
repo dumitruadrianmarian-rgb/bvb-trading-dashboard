@@ -14,6 +14,7 @@ the exact venv path). Feed it a script over stdin, one command per line:
   press <key>                        # e.g. Enter
   screenshot <name>                  # saves screenshots/<name>.png
   console                            # prints captured console errors so far
+  eval <js-expression>               # runs JS in the page, prints the return value (or error)
   sleep <ms>
 
 Blank lines and lines starting with # are ignored. Exits non-zero if any
@@ -82,6 +83,12 @@ def main():
                 page.wait_for_timeout(int(arg))
             elif cmd == "console":
                 print("  errors so far:", console_errors)
+            elif cmd == "eval":
+                try:
+                    result = page.evaluate(arg)
+                    print("  ->", result)
+                except Exception as e:
+                    print("  !! eval error:", e)
             else:
                 print(f"  unknown command: {cmd}", file=sys.stderr)
 
