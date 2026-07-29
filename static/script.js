@@ -3058,7 +3058,10 @@ function renderPortfolioHistoryChart(history) {
         theme: { mode: chartTheme.mode },
         tooltip: {
             theme: chartTheme.mode,
-            x: { formatter: formatDate },
+            // On a category axis, ApexCharts calls this with the point's 1-based
+            // index (not the category value), unlike the xaxis.labels formatter
+            // above - look the real date up from dataPointIndex instead.
+            x: { formatter: (value, opts) => (opts && opts.dataPointIndex != null) ? formatDate(dates[opts.dataPointIndex]) : "" },
             y: { formatter: (value) => value.toLocaleString("ro-RO", { minimumFractionDigits: 2 }) + " RON" }
         },
         dataLabels: { enabled: false }
