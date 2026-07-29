@@ -6,3 +6,6 @@ __pycache__/
 
 # Runtime state and secrets (Telegram bot token, portfolio, alerts)
 data/
+
+# Subagent-driven-development scratch workspace (ledger, briefs, reports)
+.superpowers/
