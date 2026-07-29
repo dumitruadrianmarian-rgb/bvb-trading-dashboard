@@ -13,6 +13,21 @@ let portfolio = [];
 let portfolioChart = null;
 let realizedTransactions = [];
 
+// Letters, digits, dot, dash - covers BVB tickers (TLV, H2O) and off-exchange
+// ones bought through a broker (VWCE.DE, IWDA.AS, BRK-B), while rejecting
+// emoji/whitespace/special characters that aren't a real ticker. Shared by
+// the portfolio "Adaugă Tranzacție" form and the price-alert form.
+const SYMBOL_PATTERN = /^[A-Z0-9.\-]{1,15}$/;
+
+// Escapes a string for safe interpolation into innerHTML (used for free-text
+// fields like the realized-transaction "Simbol / Descriere" label, which -
+// unlike ticker symbols - isn't restricted to a safe charset).
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 window.serverAlerts = [];
 function fetchServerAlerts() {
     fetch('/api/alerts')
@@ -2323,11 +2338,6 @@ function initPortfolio() {
         }
     });
 
-    // Letters, digits, dot, dash - covers BVB tickers (TLV, H2O) and off-exchange
-    // ones bought through a broker (VWCE.DE, IWDA.AS, BRK-B), while rejecting
-    // emoji/whitespace/special characters that aren't a real ticker.
-    const SYMBOL_PATTERN = /^[A-Z0-9.\-]{1,15}$/;
-
     if (form) {
         form.addEventListener("submit", e => {
             e.preventDefault();
@@ -2605,7 +2615,7 @@ function renderPortfolio() {
                 const formattedNet = net.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
 
                 tr.innerHTML = `
-                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${item.symbol}</td>
+                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">${escapeHtml(item.symbol)}</td>
                     <td style="font-family: var(--font-mono); text-align: right; color: var(--color-green);">${formattedGain}</td>
                     <td style="font-family: var(--font-mono); text-align: right; color: var(--color-red);">${formattedLoss}</td>
                     <td style="font-family: var(--font-mono); text-align: right; color: #f59e0b;">${formattedTax}</td>
@@ -3372,11 +3382,24 @@ async function deleteRealizedEntry(idx) {
 
 async function saveRealizedEntry() {
     const symbol = document.getElementById('realized-form-symbol').value.trim();
-    if (!symbol) { alert('Simbolul / descrierea este obligatorie!'); return; }
+    if (!symbol) { showToast('Simbolul / descrierea este obligatorie!', 'error'); return; }
 
-    const gain  = parseFloat(document.getElementById('realized-form-gain').value) || 0;
-    const loss  = parseFloat(document.getElementById('realized-form-loss').value) || 0;
-    const tax   = parseFloat(document.getElementById('realized-form-tax').value) || 0;
+    // Empty field = 0 (the form's own default), but anything non-numeric that
+    // was actually typed (e.g. "abc") must be rejected, not silently zeroed -
+    // `parseFloat(...) || 0` used to swallow bad input with no feedback.
+    const gainRaw = document.getElementById('realized-form-gain').value.trim();
+    const lossRaw = document.getElementById('realized-form-loss').value.trim();
+    const taxRaw  = document.getElementById('realized-form-tax').value.trim();
+
+    const gain = gainRaw === '' ? 0 : parseFloat(gainRaw);
+    const loss = lossRaw === '' ? 0 : parseFloat(lossRaw);
+    const tax  = taxRaw === '' ? 0 : parseFloat(taxRaw);
+
+    if (isNaN(gain) || isNaN(loss) || isNaN(tax)) {
+        showToast('Câștig, Pierdere sau Impozit invalid.', 'error');
+        return;
+    }
+
     const net   = gain + loss; // loss should already be negative
 
     const entry = { symbol, gain, loss, net, tax };
@@ -3590,8 +3613,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const target = parseFloat(targetInput.value);
             const type = typeInput.value;
             
-            if (!sym || isNaN(target) || target <= 0) {
-                showToast("Simbol sau preț invalid!", "error");
+            if (!sym || !SYMBOL_PATTERN.test(sym)) {
+                showToast("Simbol invalid. Folosește doar litere, cifre, punct sau liniuță (ex: TLV, VWCE.DE).", "error");
+                return;
+            }
+
+            if (isNaN(target) || target <= 0) {
+                showToast("Preț țintă invalid.", "error");
                 return;
             }
             
