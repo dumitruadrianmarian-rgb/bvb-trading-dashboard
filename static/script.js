@@ -1,5 +1,6 @@
 // State Management
 let stocks = [];
+let betIndex = null;
 let recommendations = {};
 let activeSymbol = null;
 let initialLoad = true;
@@ -373,6 +374,7 @@ function fetchData(callback = null) {
         .then(res => res.json())
         .then(data => {
             stocks = data.stocks;
+            betIndex = data.bet_index;
             applySorting();
             
             // Update last updated time and status indicator
@@ -546,6 +548,21 @@ function populateWatchlist() {
 
 // Update Top Highlight Widgets
 function updateTopWidgets() {
+    // 0. BET index (scraped from the BVB homepage widget - see get_bet_index() in app.py)
+    if (betIndex) {
+        const betValueEl = document.getElementById("bet-index-value");
+        const betChangeEl = document.getElementById("bet-index-change");
+        if (betValueEl) {
+            betValueEl.innerText = betIndex.value.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " RON";
+        }
+        if (betChangeEl) {
+            const pct = betIndex.change_pct;
+            const prefix = pct > 0 ? "+" : "";
+            betChangeEl.innerText = `${prefix}${pct.toFixed(2).replace(".", ",")}%`;
+            betChangeEl.className = `index-change ${pct > 0 ? "positive" : (pct < 0 ? "negative" : "neutral")}`;
+        }
+    }
+
     // 1. Find top traded (highest positive change or custom logic)
     let topTraded = null;
     let maxChange = -999.0;

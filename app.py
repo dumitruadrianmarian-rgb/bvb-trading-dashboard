@@ -35,7 +35,8 @@ DATA_CACHE = {
     "stocks": {},
     "recommendations": {},
     "last_updated": 0,
-    "status": "Initializing"
+    "status": "Initializing",
+    "bet_index": None
 }
 
 BVB_HEADERS = {
@@ -236,6 +237,42 @@ def parse_bvb_metrics(symbol):
         }
     except Exception as e:
         print(f"Error scraping BVB for {symbol}: {e}")
+        return None
+
+def get_bet_index():
+    """Scrape the live BET index value/change from the BVB homepage indices widget.
+
+    There's no dedicated instrument details page for indices (unlike stocks -
+    FinancialInstrumentsDetails.aspx?s=SYMBOL doesn't resolve for index codes),
+    but the homepage renders a #spBET span with the live value, followed by a
+    sibling span with the % change, e.g.:
+      <span id='spBET'>35.538,71</span> <span>-1,92%</span>
+    """
+    url = "https://www.bvb.ro/"
+    try:
+        res = requests.get(url, headers=BVB_HEADERS, verify=False, timeout=8)
+        if res.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(res.text, 'html.parser')
+        value_tag = soup.find('span', id='spBET')
+        if not value_tag:
+            return None
+
+        value = float(value_tag.text.strip().replace('.', '').replace(',', '.'))
+
+        change_pct = 0.0
+        change_span = value_tag.find_next_sibling('span')
+        if change_span and '%' in change_span.text:
+            change_text = change_span.text.strip().replace('%', '').replace(',', '.')
+            try:
+                change_pct = float(change_text)
+            except ValueError:
+                pass
+
+        return {"value": value, "change_pct": change_pct}
+    except Exception as e:
+        print(f"Error scraping BET index: {e}")
         return None
 
 def fetch_yahoo_history(yahoo_symbol):
@@ -646,6 +683,10 @@ def perform_update_cycle(force_refresh=False):
     tickers_snapshot = list(TICKERS.items())
     temp_stocks = {}
     
+    bet_index = get_bet_index()
+    if bet_index:
+        DATA_CACHE["bet_index"] = bet_index
+
     for symbol, info in tickers_snapshot:
         print(f"Updating {symbol}...")
         # 1. Scrape BVB details
@@ -870,7 +911,8 @@ def get_stocks():
     return jsonify({
         "stocks": list(DATA_CACHE["stocks"].values()),
         "last_updated": DATA_CACHE["last_updated"],
-        "status": DATA_CACHE["status"]
+        "status": DATA_CACHE["status"],
+        "bet_index": DATA_CACHE["bet_index"]
     })
 
 @app.route('/api/stocks/search', methods=['GET'])
